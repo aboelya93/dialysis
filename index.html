@@ -1368,17 +1368,26 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ==========================================
-    // جسر الاتصال ومحاكي جوجل سحابياً لـ GitHub Pages
-    // ==========================================
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNH_h1w3yjF_-IclXlZUCa0e8GyzsuO7AAKTMWQn6i2qeCEFrvZNe8fFAGFWaCIk-NIg/exec";
+   // =======================================================
+    // جسر الاتصال ومحاكي جوجل سحابياً المطور يدعم الأوفلاين الكامل
+    // =======================================================
+    const GAS_WEB_APP_URL = "ضع_هنا_رابط_تطبيق_الويب_الخاص_بجوجل_الذي_نسخته_سابقاً";
+
+    // مصفوفة برمجية لتخزين التعديلات العالقة عند تصفح الموقع والإنترنت مقطوع
+    let offlineQueue = JSON.parse(localStorage.getItem('dialysis_offline_queue') || '[]');
 
     function executeServerMethod(methodName, args, successCb, failureCb) {
+        // إذا كان الموبايل فاصلاً للإنترنت تماماً أثناء تعديل الجدول أو الألوان
+        if (!navigator.onLine) {
+            handleOfflineRequest(methodName, args, successCb);
+            return;
+        }
+
         fetch(GAS_WEB_APP_URL, {
             method: "POST",
             mode: "cors",
             headers: {
-                "Content-Type": "text/plain;charset=utf-8" // تجنب قيود الحماية لمرور الطلبات بسرعة فائقة
+                "Content-Type": "text/plain;charset=utf-8"
             },
             body: JSON.stringify({
                 functionName: methodName,
@@ -1395,10 +1404,61 @@
             }
         })
         .catch(err => {
-            if (failureCb) failureCb(err);
-            else alert("خطأ في الشبكة: " + err.message);
+            // في حال انقطع الاتصال فجأة أثناء الإرسال، نقوم بتأجيل الطلب وحفظه بالهاتف
+            handleOfflineRequest(methodName, args, successCb);
         });
     }
+
+    // دالة حفظ وتأجيل التعديلات العالقة في ذاكرة الهاتف وتمرير استجابة وهمية ناجحة لتستمر الواجهة بالعمل دون تجميد
+    function handleOfflineRequest(methodName, args, successCb) {
+        // العمليات الهامة المتاح تأجيلها ومزامنتها لاحقاً (حفظ المواعيد، تغيير الألوان، الملاحظات)
+        const syncableMethods = ["saveScheduleChanges", "addStaffNote", "updatePatientNote", "setPatientTimerServer"];
+        if (syncableMethods.includes(methodName)) {
+            offlineQueue.push({ methodName, args });
+            localStorage.setItem('dialysis_offline_queue', JSON.stringify(offlineQueue));
+            
+            // تمرير استجابة نجاح وهمية للموقع لكي يطبق اللون أو الاسم الجديد أمامك ولا يظهر لك خطأ
+            if (successCb) successCb({ success: true, offlineSync: true });
+        } else {
+            alert("تعذر الاتصال بالخادم. يرجى توفر إنترنت لتنفيذ هذه العملية.");
+        }
+    }
+
+    // دالة إرسال كافة التعديلات العالقة بالترتيب إلى جوجل شيت فور عودة الإنترنت
+    function processOfflineQueue() {
+        if (!navigator.onLine || offlineQueue.length === 0) return;
+        
+        const task = offlineQueue[0];
+        
+        fetch(GAS_WEB_APP_URL, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify({
+                functionName: task.methodName,
+                arguments: task.args
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                // إزالة العملية الناجحة والتقدم للعملية التي تليها تتابعياً
+                offlineQueue.shift();
+                localStorage.setItem('dialysis_offline_queue', JSON.stringify(offlineQueue));
+                processOfflineQueue(); 
+            }
+        })
+        .catch(err => {
+            console.log("تعذر مزامنة العمليات العالقة حالياً، سيتم المحاولة مجدداً عند استقرار الشبكة.");
+        });
+    }
+
+    // الاستماع لحدث عودة الإنترنت في الموبايل فورياً لتنشيط المزامنة التلقائية الصامتة للشيت
+    window.addEventListener('online', () => {
+        processOfflineQueue();
+    });
 
     // محاكاة واجهة google.script.run عبر تقنية الـ Proxy لمنع تعطل الأكواد الحالية للموقع
     const google = {
