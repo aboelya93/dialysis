@@ -1666,16 +1666,15 @@
 
     function initPwaSupport() {
         try {
+            // توجيه المتصفح لقراءة ملف المانيفست المحلي المرفوع على جيت هاب للأوفلاين الفوري
             const manifestLink = document.getElementById('pwaManifestLink');
             if (manifestLink) {
-                const u = new URL(window.location.href);
-                u.searchParams.set('page', 'manifest');
-                manifestLink.href = u.toString();
+                manifestLink.href = './manifest.json';
             }
+            // تسجيل ملف التثبيت والتخزين المحلي المخصص للعمل بالكامل دون اتصال بالإنترنت
             if ('serviceWorker' in navigator) {
-                const swUrl = new URL(window.location.href);
-                swUrl.searchParams.set('page', 'sw');
-                navigator.serviceWorker.register(swUrl.href).catch(function() { /* قد لا يدعم نطاق GAS */ });
+                navigator.scriptUrl = './sw.js';
+                navigator.serviceWorker.register('./sw.js').catch(function() { /* تجاهل */ });
             }
         } catch (e) { /* تجاهل */ }
     }
