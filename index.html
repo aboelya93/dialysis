@@ -1651,16 +1651,23 @@
         const pwd = loadStoredAdminPassword();
         const sessionDate = getStoredAdminSessionDate();
         if (!pwd || sessionDate !== getTodayDateKey()) return;
+        
+        // منح الصلاحية الإدارية محلياً فوراً لضمان عدم طرد المسؤول عند تصفح الموقع والإنترنت مقطوع صباحاً
+        grantAdminAccess(pwd);
+        
         google.script.run.withSuccessHandler(res => {
             if (res.success && res.authenticated) {
+                // إذا تم الاتصال بنجاح وتأكد الرمز، نثبت الجلسة سحابياً
                 grantAdminAccess(pwd);
+            } else {
+                // إذا تم الاتصال والرمز خاطئ (تم تغييره مثلاً)، نزيل الصلاحية ونخرج
+                logoutAdminSession();
                 renderAll();
                 renderGeneralNotes();
-            } else {
-                clearAdminSession(false);
             }
         }).withFailureHandler(function() {
-            clearAdminSession(false);
+            // إذا فشل الاتصال بالشبكة بسبب قطوعات الإنترنت الصباحية، نحتفظ بالصلاحية المحلية المؤقتة ولا نطرد المسؤول
+            console.log("تم الحفاظ على وضع الصلاحية المحلية المؤقتة لعدم توفر اتصال بالإنترنت حالياً.");
         }).verifyAdminKey(pwd);
     }
 
