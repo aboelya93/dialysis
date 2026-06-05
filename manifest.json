@@ -1,0 +1,20 @@
+{
+  "name": "جدول مرضى غسيل الكلى",
+  "short_name": "جدول الغسيل",
+  "description": "إدارة مواعيد مرضى غسيل الكلى",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#1565c0",
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%231565c0'/%3E%3Cpath fill='%23ffffff' d='M96 36c-22 28-44 48-44 72a44 44 0 1088 0c0-24-22-44-44-72z'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
