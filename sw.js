@@ -24,13 +24,32 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    // قراءة الملفات البرمجية والخطوط والرموز من ذاكرة الهاتف الداخلية أولاً للعمل أوفلاين بالكامل
+    // تجنب اعتراض طلبات API الخاصة بجوجل
+    if (event.request.url.includes('script.google.com')) {
+        return;
+    }
+    
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
             if (cachedResponse) {
                 return cachedResponse;
             }
-            return fetch(event.request);
+            
+            return fetch(event.request).then(networkResponse => {
+                // تخزين ديناميكي للملفات الثابتة لضمان بقائها دائماً
+                if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+                    const responseClone = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => {
+                // في حال فشل الشبكة تماماً للملاحة، نعيد الصفحة الرئيسية المخزنة
+                if (event.request.mode === 'navigate') {
+                    return caches.match('./index.html') || caches.match('./');
+                }
+            });
         })
     );
 });
