@@ -1396,7 +1396,7 @@
         })
         .catch(err => {
             if (failureCb) failureCb(err);
-            else alert("خطأ في الشبكة: " + err.message);
+            else console.warn("تعذر الاتصال بالخادم (وضع الأوفلاين): " + err.message);
         });
     }
 
