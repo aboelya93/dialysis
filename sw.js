@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dialysis-cache-v1';
+const CACHE_NAME = 'dialysis-cache-v2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -20,9 +20,18 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-    event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cache => {
+                    if (cache !== CACHE_NAME) {
+                        return caches.delete(cache);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
 });
-
 self.addEventListener('fetch', event => {
     // تجنب اعتراض طلبات API الخاصة بجوجل
     if (event.request.url.includes('script.google.com')) {
