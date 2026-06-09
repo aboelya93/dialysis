@@ -2054,6 +2054,11 @@
                         <i class="fas fa-stopwatch"></i>
                     </span>`;
                 }
+
+                // إضافة شارة الفستولا بعد المؤقت
+                if (p.c.fistula && (p.c.fistula === "Fistula" || p.c.fistula.toString().trim() !== "")) {
+                    chips += `<span class="info-chip chip-fistula">F</span>`;
+                }
                 
                 // تجهيز شارة P في متغير لوضعها قبل اسم المريض
                 let pTagHtml = p.isP ? `<span class="p-tag" style="margin-left: 4px; display: inline-block;">P</span>` : '';
