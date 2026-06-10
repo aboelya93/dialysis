@@ -1342,20 +1342,23 @@
                 <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
                     <div class="text-center">
                         <label class="small fw-bold text-muted mb-1 d-block">دقائق</label>
-                        <!-- تم تغيير النوع إلى text لمنع حظر الأرقام العربية من المتصفح مع إبقاء لوحة أرقام الهاتف نشطة -->
-                        <input type="text" id="timerMinutes" inputmode="numeric" class="form-control form-control-sm fw-bold text-center" style="width: 70px;" placeholder="">
+                        <!-- تم تمكين خصائص حظر ومنع ظهور مقترحات الكيبورد تماماً للهواتف -->
+                        <input type="text" id="timerMinutes" inputmode="numeric" class="form-control form-control-sm fw-bold text-center" style="width: 70px;" placeholder="" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false">
                     </div>
                     <span class="fw-bold fs-4 mt-3">:</span>
                     <div class="text-center">
                         <label class="small fw-bold text-muted mb-1 d-block">ساعات</label>
-                        <!-- تم تغيير النوع إلى text لمنع حظر الأرقام العربية من المتصفح مع إبقاء لوحة أرقام الهاتف نشطة -->
-                        <input type="text" id="timerHours" inputmode="numeric" class="form-control form-control-sm fw-bold text-center" style="width: 70px;" placeholder="">
+                        <!-- تم تمكين خصائص حظر ومنع ظهور مقترحات الكيبورد تماماً للهواتف -->
+                        <input type="text" id="timerHours" inputmode="numeric" class="form-control form-control-sm fw-bold text-center" style="width: 70px;" placeholder="" autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false">
                     </div>
                 </div>
 
                 <div class="d-flex flex-column gap-2">
                     <button type="button" id="startTimerBtn" onclick="executeStartTimer()" class="btn btn-warning fw-bold py-2 w-100" style="border-radius: 10px;">
                         <i class="fas fa-play me-2"></i> تشغيل المؤقت
+                    </button>
+                    <button type="button" id="endSessionBtn" onclick="executeEndSession()" class="btn btn-dark fw-bold py-2 w-100" style="border-radius: 10px; display: none;">
+                        <i class="fas fa-hourglass-end me-2"></i> إنهاء الجلسة
                     </button>
                     <button type="button" id="stopTimerBtn" onclick="executeStopTimer()" class="btn btn-danger fw-bold py-2 w-100" style="border-radius: 10px; display: none;">
                         <i class="fas fa-stop me-2"></i> إيقاف وإلغاء المؤقت
@@ -1680,7 +1683,6 @@
             }
             // تسجيل ملف التثبيت والتخزين المحلي المخصص للعمل بالكامل دون اتصال بالإنترنت
             if ('serviceWorker' in navigator) {
-                navigator.scriptUrl = './sw.js';
                 navigator.serviceWorker.register('./sw.js').catch(function() { /* تجاهل */ });
             }
         } catch (e) { /* تجاهل */ }
@@ -1721,6 +1723,21 @@
         document.body.classList.toggle('stale-data-active', !!active);
         const footer = document.getElementById('dataStaleFooter');
         if (footer) footer.classList.toggle('visible', !!active);
+        
+        const loadingPill = document.getElementById('dataLoadingPill');
+        if (loadingPill) {
+            if (!navigator.onLine) {
+                loadingPill.style.background = 'linear-gradient(135deg, #455a64 0%, #607d8b 100%)';
+                loadingPill.style.boxShadow = '0 4px 12px rgba(96, 125, 139, 0.4)';
+                const textSpan = loadingPill.querySelector('span:not(.data-loading-pill-shine)');
+                if (textSpan) textSpan.textContent = 'أنت تعمل بدون اتصال (الذاكرة المؤقتة)';
+            } else {
+                loadingPill.style.background = '';
+                loadingPill.style.boxShadow = '';
+                const textSpan = loadingPill.querySelector('span:not(.data-loading-pill-shine)');
+                if (textSpan) textSpan.textContent = 'المعلومات قيد التحميل';
+            }
+        }
         if (!active) resetRefreshDataNowBtn();
     }
 
@@ -2055,10 +2072,6 @@
                     </span>`;
                 }
 
-                // إضافة شارة الفستولا بعد المؤقت
-                if (p.c.fistula && (p.c.fistula === "Fistula" || p.c.fistula.toString().trim() !== "")) {
-                    chips += `<span class="info-chip chip-fistula">F</span>`;
-                }
                 
                 // تجهيز شارة P في متغير لوضعها قبل اسم المريض
                 let pTagHtml = p.isP ? `<span class="p-tag" style="margin-left: 4px; display: inline-block;">P</span>` : '';
@@ -4005,6 +4018,7 @@
             const c = getContactInfo(p.n);
             const color = (p.clr && p.clr !== "#ffffff") ? p.clr : "";
             const filterKey = c.filter ? c.filter.toString().trim() : '';
+            const isFistula = (c.fistula === "Fistula" || (c.fistula && c.fistula.toString().trim() !== ""));
             if (filterKey) {
                 if (!cat[filterKey]) {
                     cat[filterKey] = [];
@@ -4014,10 +4028,10 @@
                         else filterOrder.push(filterKey);
                     }
                 }
-                cat[filterKey].push({ name: p.n, color: color });
+                cat[filterKey].push({ name: p.n, color: color, hasFistula: isFistula });
             }
-            if (c.fistula === "Fistula" || c.fistula) {
-                cat["Fistula"].push({ name: p.n, color: color });
+            if (isFistula) {
+                cat["Fistula"].push({ name: p.n, color: color, hasFistula: isFistula });
             }
         });
         let h = '';
@@ -4027,7 +4041,8 @@
             const isFistula = k === "Fistula" ? "fistula-type" : "";
             const namesHtml = cat[k].map((item, i) => {
                 const style = item.color ? ` style="color:${item.color}"` : '';
-                return `<div class="supply-patient-row"${style}><span class="supply-patient-idx">${i + 1}.</span> ${escapeHtml(item.name)}</div>`;
+                const fistulaBadge = (k !== "Fistula" && item.hasFistula) ? ` <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.62rem; padding: 2px 4px; border-radius: 4px; vertical-align: middle;">F</span>` : '';
+                return `<div class="supply-patient-row"${style}><span class="supply-patient-idx">${i + 1}.</span> ${escapeHtml(item.name)}${fistulaBadge}</div>`;
             }).join('');
             h += `<div class="supply-item ${isFistula}">
                 <div class="supply-header-row">
@@ -4126,7 +4141,7 @@
         
         let h = `<div class="patient-nav-header mb-3"><div class="nav-buttons-row"><div class="d-flex gap-2"><button class="nav-patient-btn" onclick="navigatePatient(1)" ${nextDisabled}><i class="fas fa-chevron-right"></i></button><button class="nav-patient-btn" onclick="navigatePatient(-1)" ${prevDisabled}><i class="fas fa-chevron-left"></i></button></div><button class="btn btn-sm btn-outline-primary fw-bold" onclick="backToInfoList()"><i class="fas fa-list-ul me-1"></i> عرض الكل</button></div><div class="patient-title-box"><h5>${fullName}</h5></div></div>`;
         
-        // عرض أزرار المسؤول وملاحظة المريض المخصصة
+        // أزرار المسؤول (تعديل وحذف المريض)
         if (isAdminAuthenticated) {
             h += `
                 <div class="d-flex gap-2 mb-3">
@@ -4137,10 +4152,35 @@
                         <i class="fas fa-trash-alt me-1"></i> حذف المريض
                     </button>
                 </div>
+            `;
+        }
+
+        // عرض ملاحظة المريض (تعديل للادارة، عرض فقط للكادر)
+        if (personalNote) {
+            if (isAdminAuthenticated) {
+                h += `
+                    <div class="mb-3 p-2 border rounded bg-warning bg-opacity-10">
+                        <b class="small text-danger mb-1 d-block"><i class="fas fa-comment-dots ms-1"></i> ملاحظة المريض:</b>
+                        <div class="input-group">
+                            <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" value="${escapeHtml(personalNote)}">
+                            <button class="btn btn-danger btn-sm" onclick="savePatientPersonalNote('${escapeHtml(fullName).replace(/'/g, "\\'")}')"><i class="fas fa-check"></i></button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                h += `
+                    <div class="mb-3 p-2 border rounded bg-warning bg-opacity-10">
+                        <b class="small text-danger mb-1 d-block"><i class="fas fa-comment-dots ms-1"></i> ملاحظة المريض:</b>
+                        <div class="fw-bold small" style="padding: 4px; word-break: break-word; color: var(--text-main);">${escapeHtml(personalNote)}</div>
+                    </div>
+                `;
+            }
+        } else if (isAdminAuthenticated) {
+            h += `
                 <div class="mb-3 p-2 border rounded bg-warning bg-opacity-10">
                     <b class="small text-danger mb-1 d-block"><i class="fas fa-comment-dots ms-1"></i> ملاحظة المريض:</b>
                     <div class="input-group">
-                        <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" value="${escapeHtml(personalNote)}">
+                        <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" placeholder="أضف ملاحظة خاصة بالمريض...">
                         <button class="btn btn-danger btn-sm" onclick="savePatientPersonalNote('${escapeHtml(fullName).replace(/'/g, "\\'")}')"><i class="fas fa-check"></i></button>
                     </div>
                 </div>
@@ -4933,11 +4973,16 @@
         if (label) label.textContent = "مؤقت المريض: " + patientName;
         
         const timerState = getPatientTimerState(patientName);
+        const endBtn = document.getElementById('endSessionBtn');
+        
         if (timerState && timerState.active) {
             // المؤقت مضبوط (يعمل حالياً أو في حالة "انتهى الوقت")
             if (startBtn) {
                 startBtn.style.display = 'block';
                 startBtn.innerHTML = '<i class="fas fa-edit me-2"></i> تعديل المؤقت';
+            }
+            if (endBtn) {
+                endBtn.style.display = (!timerState.finished) ? 'block' : 'none';
             }
             // إظهار زر الإلغاء فقط إذا كان الكادر في وضع الإدارة
             if (stopBtn) {
@@ -4964,6 +5009,7 @@
                 startBtn.style.display = 'block';
                 startBtn.innerHTML = '<i class="fas fa-play me-2"></i> تشغيل المؤقت';
             }
+            if (endBtn) endBtn.style.display = 'none';
             if (stopBtn) stopBtn.style.display = 'none';
             
             document.getElementById('timerHours').value = "";
@@ -5032,6 +5078,35 @@
                 updateAllCountdowns();
             } else {
                 alert("فشل بدء المؤقت: " + res.error);
+            }
+        }).withFailureHandler(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            alert("خطأ الاتصال بالسيرفر: " + err.message);
+        }).setPatientTimerServer(currentTimerPatient, expiryTime);
+    }
+
+function executeEndSession() {
+        if (!currentTimerPatient) return;
+
+        const syncedNow = Date.now() - (window.clientServerOffset || 0);
+        const expiryTime = new Date(syncedNow).toISOString();
+
+        const btn = document.getElementById('endSessionBtn');
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري الإنهاء...';
+
+        google.script.run.withSuccessHandler(res => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (res.success) {
+                activeTimers[currentTimerPatient] = expiryTime;
+                bootstrap.Modal.getInstance(document.getElementById('patientTimerModal'))?.hide();
+                renderAll();
+                updateAllCountdowns();
+            } else {
+                alert("فشل إنهاء الجلسة: " + res.error);
             }
         }).withFailureHandler(err => {
             btn.disabled = false;
