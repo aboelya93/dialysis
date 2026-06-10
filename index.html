@@ -220,7 +220,7 @@
         }
         .day-picker-card { background: var(--bg-card); border-radius: var(--radius); padding: 8px 12px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
         .day-picker-container { width: 100%; }
-        #dayPicker { width: 100%; border-radius: 10px; border: 1px solid var(--border); padding: 8px 12px; font-weight: 800; color: var(--accent); background: var(--p-list-bg); box-shadow: none; font-size: 0.95rem; cursor: pointer; }
+        #dayPicker { width: 100%; text-align: center; text-align-last: center; border-radius: 10px; border: 1px solid var(--border); padding: 8px; font-weight: 800; color: var(--accent); background: var(--p-list-bg); box-shadow: none; font-size: 0.95rem; /* كبرنا حجم خط الاختيار ليكون اليوم والتاريخ بالداخل مقروئين بوضوح */ }
         #dayPickerDate { display: none !important; /* إخفاء السبان الخارجي تماماً لعدم استهلاك مساحة وتجنب حدوث أخطاء برمجية */ }
         #notesArea { border-radius: var(--radius) !important; border: 1px solid #ffe082 !important; background: linear-gradient(135deg, #fffde7 0%, #fff8e1 100%) !important; box-shadow: var(--shadow-sm); overflow: hidden; position: relative; }
         .dark-mode #notesArea { background: linear-gradient(135deg, #3e3a20 0%, #2d2a18 100%) !important; border-color: #6d5c00 !important; }
@@ -351,6 +351,7 @@
             box-shadow: 0 4px 12px rgba(183, 28, 28, 0.4);
             pointer-events: none; overflow: hidden;
         }
+        .data-stale-footer.visible .data-loading-pill { display: flex; }
         .refresh-data-now-btn {
             display: none; align-items: center; justify-content: center; gap: 7px;
             padding: 6px 16px; border-radius: 999px; border: 2px solid #fff;
@@ -358,12 +359,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer;
             transition: transform 0.15s, opacity 0.15s;
         }
-        
-        /* التحكم بالظهور والتبديل لمنع تراكب العناصر السفلية */
-        .data-stale-footer.visible .data-loading-pill { display: none; }
         .data-stale-footer.visible .refresh-data-now-btn { display: flex; }
-        body.data-fetching .data-stale-footer.visible .data-loading-pill { display: flex; }
-        body.data-fetching .data-stale-footer.visible .refresh-data-now-btn { display: none; }
         .refresh-data-now-btn:hover { transform: translateY(-1px); }
         .refresh-data-now-btn:active { transform: scale(0.97); }
         .refresh-data-now-btn:disabled { opacity: 0.65; cursor: wait; }
@@ -1733,7 +1729,6 @@
         if (!btn) return;
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-rotate-right"></i><span>تحديث الآن</span>';
-        document.body.classList.remove('data-fetching');
     }
 
     function refreshDataNow() {
@@ -1743,7 +1738,6 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>جاري التحديث...</span>';
         }
-        document.body.classList.add('data-fetching');
         setStaleDataUI(true);
         isFetchingFreshData = true;
 
@@ -1903,7 +1897,6 @@
 
     function fetchDataFromServer(isBackground) {
         isFetchingFreshData = true;
-        document.body.classList.add('data-fetching');
         if (!isBackground) {
             if (loadDataCache()) setStaleDataUI(true);
             else {
@@ -1914,7 +1907,6 @@
 
         google.script.run.withSuccessHandler(res => {
             isFetchingFreshData = false;
-            document.body.classList.remove('data-fetching');
             if (!res || !res.success) {
                 if (loadDataCache() || dataStore) setStaleDataUI(true);
                 else setStaleDataUI(false);
@@ -1927,7 +1919,6 @@
             hideInitialLoader();
         }).withFailureHandler(function() {
             isFetchingFreshData = false;
-            document.body.classList.remove('data-fetching');
             if (loadDataCache() || dataStore) setStaleDataUI(true);
             else setStaleDataUI(false);
             hideInitialLoader();
