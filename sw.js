@@ -6,6 +6,9 @@ const ASSETS_TO_CACHE = [
     'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-solid-900.woff2',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-regular-400.woff2',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-brands-400.woff2',
     'https://html2canvas.hertzen.com/dist/html2canvas.min.js',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
     'https://fonts.gstatic.com/s/tajawal/v9/I8atw8Zbyu_6u_M89ubP4vFp.woff2'
