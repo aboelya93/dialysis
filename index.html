@@ -4198,8 +4198,8 @@
         });
         h += `</div>`;
         
-        if(contact.phone1) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 1</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${contact.phone1}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone1}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel1 mx-3" style="border: none;"><i class="fas fa-phone"></i></button></div>`;
-        if(contact.phone2) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 2</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${contact.phone2}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone2}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel2 mx-3" style="border: none;"><i class="fas fa-phone"></i></button></div>`;
+        if(contact.phone1) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 1</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${cleanPhoneString(contact.phone1)}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone1}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel1 mx-3" style="border: none;"><i class="fas fa-phone"></i></button></div>`;
+        if(contact.phone2) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 2</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${cleanPhoneString(contact.phone2)}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone2}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel2 mx-3" style="border: none;"><i class="fas fa-phone"></i></button></div>`;
         h += `<div class="mt-4"><b class="small text-muted d-block mb-1 text-center"><i class="fas fa-calendar-check ms-1"></i> مواعيد الغسل للاسبوع الحالي</b>`;
         if(scheduleData.length > 0) { 
             h += `<table class="sch-table"><thead><tr><th>اليوم والتاريخ</th><th>الشفت</th></tr></thead><tbody>`;
@@ -4705,8 +4705,8 @@
         document.getElementById('formPatientDoctor').value = p["الطبيب"] || "";
         document.getElementById('formPatientFilter').value = p["الفلتر"] || p["Filter"] || "";
         document.getElementById('formPatientFistula').value = ((p["Fistula"] || p["fistula"] || "") === 'Fistula') ? 'Fistula' : '';
-        document.getElementById('formPatientPhone1').value = contact.phone1 || p["رقم الموبايل 1"] || "";
-        document.getElementById('formPatientPhone2').value = contact.phone2 || p["رقم الموبايل 2"] || "";
+        document.getElementById('formPatientPhone1').value = cleanPhoneString(contact.phone1 || p["رقم الموبايل 1"] || "");
+        document.getElementById('formPatientPhone2').value = cleanPhoneString(contact.phone2 || p["رقم الموبايل 2"] || "");
 
         isEditingPatientMode = true;
         currentEditingPatientName = fullName;
@@ -4746,6 +4746,29 @@
         const pwd = scheduleEditorPassword;
         if (!pwd) return alert("الرجاء تسجيل الدخول أولاً كمسؤول.");
 
+        let rawPhone1 = document.getElementById('formPatientPhone1').value.trim();
+        let rawPhone2 = document.getElementById('formPatientPhone2').value.trim();
+
+        if (rawPhone1) {
+            let cleanDigits = rawPhone1.replace(/\D/g, '');
+            if (cleanDigits.startsWith('7') && cleanDigits.length === 10) {
+                rawPhone1 = '0' + cleanDigits;
+            }
+            if (!rawPhone1.startsWith("'")) {
+                rawPhone1 = "'" + rawPhone1;
+            }
+        }
+
+        if (rawPhone2) {
+            let cleanDigits = rawPhone2.replace(/\D/g, '');
+            if (cleanDigits.startsWith('7') && cleanDigits.length === 10) {
+                rawPhone2 = '0' + cleanDigits;
+            }
+            if (!rawPhone2.startsWith("'")) {
+                rawPhone2 = "'" + rawPhone2;
+            }
+        }
+
         const pData = {
             fullName: document.getElementById('formPatientFullName').value.trim(),
             originalName: isEditingPatientMode ? currentEditingPatientName : "",
@@ -4758,8 +4781,8 @@
             doctor: document.getElementById('formPatientDoctor').value.trim(),
             filter: document.getElementById('formPatientFilter').value.trim(),
             fistula: document.getElementById('formPatientFistula').value === 'Fistula' ? 'Fistula' : '',
-            phone1: document.getElementById('formPatientPhone1').value.trim(),
-            phone2: document.getElementById('formPatientPhone2').value.trim()
+            phone1: rawPhone1,
+            phone2: rawPhone2
         };
 
         if (!pData.fullName) return alert("الرجاء إدخال اسم المريض الرباعي");
@@ -4806,6 +4829,24 @@
     }
 
     // دوال معالجة وفتح الاتصال الهاتفي والواتساب من زر واحد
+    function cleanPhoneString(phone) {
+        if (!phone) return "";
+        let p = phone.toString().trim();
+        if (p.startsWith("'")) {
+            p = p.slice(1);
+        }
+        return p;
+    }
+
+    function formatPhoneForDialing(phone) {
+        if (!phone) return "";
+        let clean = phone.toString().replace(/\D/g, ''); 
+        if (clean.startsWith('7') && clean.length === 10) {
+            clean = '0' + clean;
+        }
+        return clean;
+    }
+
     function formatWhatsAppLink(phone) {
         let clean = phone.toString().replace(/\D/g, ''); // الاحتفاظ بالأرقام فقط
         if (clean.startsWith('00')) {
@@ -4831,13 +4872,15 @@
         const callLink = document.getElementById('phoneCallLink');
         const waLink = document.getElementById('phoneWhatsAppLink');
         
+        const cleanedPhone = cleanPhoneString(phone);
+        const dialedPhone = formatPhoneForDialing(phone);
+        
         if (title) {
-            // استخراج أول اسمين فقط (الاسم الأول واسم الأب) دون تعديل الأحرف الأصلية
             const twoWords = (patientName || "").split(" ").filter(Boolean).slice(0, 2).join(" ");
             title.textContent = "خيارات التواصل" + (twoWords ? ` (${twoWords})` : "");
         }
-        if (label) label.textContent = "الرقم: " + toArabicDigits(phone);
-        if (callLink) callLink.href = "tel:" + phone.replace(/\s/g, '');
+        if (label) label.textContent = "الرقم: " + toArabicDigits(cleanedPhone);
+        if (callLink) callLink.href = "tel:" + dialedPhone;
         if (waLink) waLink.href = formatWhatsAppLink(phone);
         
         const el = document.getElementById('phoneActionModal');
