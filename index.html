@@ -1129,6 +1129,18 @@
                             <input type="date" id="newGenNoteDate" class="form-control form-control-sm fw-bold text-center p-1" style="width: 110px; font-size: 0.7rem;">
                             <input type="time" id="newGenNoteTime" class="form-control form-control-sm fw-bold text-center p-1" style="width: 70px; font-size: 0.7rem;">
                         </div>
+
+                        <!-- اختيار لون الخط للملاحظة الجديدة -->
+                        <div class="d-flex align-items-center justify-content-center gap-2 mb-1 p-1 rounded border bg-light" style="font-size: 0.7rem;">
+                            <span class="fw-bold text-muted">لون خط الملاحظة:</span>
+                            <select id="newGenNoteColor" class="form-select form-select-sm fw-bold p-1" style="width: 120px; font-size: 0.7rem;">
+                                <option value="#000000">أسود (افتراضي)</option>
+                                <option value="#1565c0" style="color: #1565c0;">أزرق</option>
+                                <option value="#dc3545" style="color: #dc3545;">أحمر</option>
+                                <option value="#4a148c" style="color: #4a148c;">بنفسجي غامق</option>
+                                <option value="#e65100" style="color: #e65100;">برتقالي</option>
+                            </select>
+                        </div>
                         
                         <button class="btn btn-success btn-sm w-100 mt-1" onclick="addGenNoteFromInput()"><i class="fas fa-plus me-1"></i> إضافة الملاحظة</button>
                     </div>
@@ -2049,13 +2061,17 @@
         if (!notesArea || !notesContent || !dataStore) return;
         let h = '';
         (dataStore.genNotes || []).forEach(n => {
-            if (n && n.text) h += `<div class="small fw-bold mb-1">• ${escapeHtml(n.text)}</div>`;
+            if (n && n.text) {
+                // تلوين الخط استناداً للون الملاحظة المحفوظ، وإعادتها للوضع التلقائي للمظهر إذا كانت سوداء
+                const textColor = n.color && n.color !== "#000000" ? n.color : "inherit";
+                h += `<div class="small fw-bold mb-1" style="color: ${textColor} !important;">• ${escapeHtml(n.text)}</div>`;
+            }
         });
         if (h) {
             notesContent.innerHTML = h;
             notesArea.style.display = 'block';
         } else if (isAdminAuthenticated) {
-            notesContent.innerHTML = ''; // حذف الجملة المساعدة لتبقى البطاقة بشكل أنحف وأرفع
+            notesContent.innerHTML = '';
             notesArea.style.display = 'block';
         } else {
             notesContent.innerHTML = '';
@@ -3052,6 +3068,7 @@
         document.body.classList.add('view-mode');
         document.getElementById('scheduleViewOverlay').classList.add('open');
         updateAdminModeIndicator();
+        lockToLandscape(); // تدوير الشاشة تلقائياً لوضعية العرض الأفقي لتناسب حجم الجدول الكبير
     }
 
     function closeScheduleView() {
@@ -3069,6 +3086,22 @@
         scheduleEditPanelOpen = false;
         updateSaveFabVisibility();
         updateAdminModeIndicator();
+        unlockOrientation(); // إيقاف التدوير القسري وإعادتها للوضع الطبيعي حسب رغبة وإعدادات هاتف المستخدم
+    }
+
+    // دوال التحكم بتدوير الشاشة والاتجاهات
+    function lockToLandscape() {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(function(err) {
+                console.log("Orientation lock not supported or failed:", err);
+            });
+        }
+    }
+
+    function unlockOrientation() {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
     }
 
     function renderStickyDaysHeader() {
@@ -4691,8 +4724,8 @@
         const showNotesEditorDirectly = () => {
             cleanModalBackdrops(); // ضمان عدم وجود خلفيات متبقية
             
-            // بناء المسودة ككائنات تحتوي على نص الملاحظة وتوقيت انتهائها الموحد
-            genNotesDraft = (dataStore && dataStore.genNotes) ? dataStore.genNotes.map(n => ({ text: n.text || "", expiry: n.expiry || "" })) : [];
+            // بناء المسودة ككائنات تحتوي على نص الملاحظة وتوقيت انتهائها واللون المختار
+            genNotesDraft = (dataStore && dataStore.genNotes) ? dataStore.genNotes.map(n => ({ text: n.text || "", expiry: n.expiry || "", color: n.color || "#000000" })) : [];
 
             renderGenNotesEditList();
 
@@ -4737,7 +4770,7 @@
         return "تُحذف تلقائياً في: " + toArabicDigits(datePart) + " " + toArabicDigits(timePart);
     }
 
-    // بناء قائمة الملاحظات داخل نافذة التعديل مع إظهار تاريخ الحذف للمسؤول
+    // بناء قائمة الملاحظات داخل نافذة التعديل مع إظهار تاريخ الحذف ولون الملاحظة للمسؤول
     function renderGenNotesEditList() {
         const container = document.getElementById('genNotesListEditContainer');
         let html = '';
@@ -4747,13 +4780,33 @@
             if (!note.text || !note.text.trim()) return;
             hasNotes = true;
             const expiryText = formatExpiryDuration(note.expiry);
+            const currentColor = note.color || "#000000";
+
+            // بناء خيارات الألوان الحالية وتحديد النشط منها
+            const colorOptions = [
+                { label: "أسود (افتراضي)", value: "#000000" },
+                { label: "أزرق", value: "#1565c0" },
+                { label: "أحمر", value: "#dc3545" },
+                { label: "بنفسجي غامق", value: "#4a148c" },
+                { label: "برتقالي", value: "#e65100" }
+            ].map(c => `<option value="${c.value}"${c.value === currentColor ? ' selected' : ''} style="color: ${c.value}; font-weight: bold;">${c.label}</option>`).join('');
+
             html += `
                 <div class="card p-2 mb-2 border" style="background: var(--bg-card); border-radius: 8px;">
                     <div class="d-flex align-items-center gap-1 mb-1" style="width: 100%;">
-                        <textarea class="form-control form-control-sm fw-bold" rows="2" onchange="updateGenNoteDraftText(${idx}, this.value)" style="border-radius:6px; font-size:0.75rem; width: 100%; resize: vertical;">${escapeHtml(note.text)}</textarea>
+                        <textarea class="form-control form-control-sm fw-bold" rows="2" onchange="updateGenNoteDraftText(${idx}, this.value)" style="border-radius:6px; font-size:0.75rem; width: 100%; resize: vertical; color: ${currentColor} !important;">${escapeHtml(note.text)}</textarea>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mt-1">
+                    
+                    <!-- سطر تعديل لون الملاحظة المباشر -->
+                    <div class="d-flex align-items-center justify-content-between gap-1 mb-1" style="font-size: 0.7rem;">
+                        <span class="fw-bold text-muted">لون خط الملاحظة:</span>
+                        <select class="form-select form-select-sm fw-bold" onchange="updateGenNoteDraftColor(${idx}, this.value)" style="width: 130px; font-size: 0.68rem; padding: 2px 4px;">
+                            ${colorOptions}
+                        </select>
                         <span class="badge bg-secondary text-white" style="font-size:0.6rem;">#${idx + 1}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-1">
                         <!-- إظهار تاريخ ووقت انتهاء الصلاحية المحدد للمسؤول باللغة العربية -->
                         <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted);">${escapeHtml(expiryText)}</span>
                         <div class="d-flex gap-1">
@@ -4775,6 +4828,12 @@
     // تحديث النص في المسودة عند التعديل عليه بالكتابة
     function updateGenNoteDraftText(idx, val) {
         genNotesDraft[idx].text = val.trim();
+    }
+
+    // تحديث لون الملاحظة في المسودة وإعادة رسم القائمة لتطبيق اللون فورياً
+    function updateGenNoteDraftColor(idx, val) {
+        genNotesDraft[idx].color = val;
+        renderGenNotesEditList();
     }
 
     // إضافة ملاحظة جديدة في أول حقل فارغ متاح
@@ -4800,23 +4859,23 @@
         
         const dateVal = document.getElementById('newGenNoteDate').value;
         const timeVal = document.getElementById('newGenNoteTime').value || "00:00";
+        const colorVal = document.getElementById('newGenNoteColor').value || "#000000";
         
         let expiryTime = "";
-        // إذا قام المسؤول بتحديد تاريخ ووقت انتهاء الملاحظة
         if (dateVal) {
             const dateTimeStr = `${dateVal}T${timeVal}`;
             const expiryLocal = new Date(dateTimeStr);
             if (!isNaN(expiryLocal.getTime())) {
-                // تعديل وقت الانتهاء استناداً لفرق التوقيت لضمان المزامنة الدقيقة لجميع الهواتف
                 const syncedExpiryMs = expiryLocal.getTime() - (window.clientServerOffset || 0);
                 expiryTime = new Date(syncedExpiryMs).toISOString();
             }
         }
         
-        genNotesDraft.push({ text: text, expiry: expiryTime });
+        genNotesDraft.push({ text: text, expiry: expiryTime, color: colorVal });
         inp.value = '';
         document.getElementById('newGenNoteDate').value = '';
         document.getElementById('newGenNoteTime').value = '';
+        document.getElementById('newGenNoteColor').value = '#000000';
         renderGenNotesEditList();
     }
 
