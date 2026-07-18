@@ -16,22 +16,65 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
-            --bg-body: #eef2f7;
+            --bg-body: #f0f3f8;
             --bg-card: #ffffff;
-            --text-main: #1a2b3c;
-            --text-muted: #6b7c8f;
-            --border: #dde4ec;
-            --shift-bg: linear-gradient(135deg, #1e4d8c 0%, #2b6cb0 100%);
-            --accent: #1565c0;
-            --accent-soft: #e8f1fb;
-            --p-list-bg: #f8fafc;
-            --label-bg: #e8f1fb;
-            --value-bg: #ffffff;
-            --value-text: #1a2b3c;
-            --shadow-sm: 0 2px 8px rgba(21, 61, 100, 0.06);
-            --shadow-md: 0 8px 24px rgba(21, 61, 100, 0.1);
-            --radius: 14px;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border: #e0e6ed;
+            --accent: #2563eb;
+            --accent-soft: #eff6ff;
+            --shift-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --radius: 16px;
         }
+        /* نظام التبويب الجديد */
+        .shift-tabs-container {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 4px 12px;
+            margin-bottom: 10px;
+            scrollbar-width: none;
+        }
+        .shift-tabs-container::-webkit-scrollbar { display: none; }
+        .shift-tab-btn {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: var(--shadow-sm);
+        }
+        .shift-tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        /* تطوير كرت المريض */
+        .patient-card {
+            border: none;
+            margin-bottom: 10px;
+            border-radius: 14px !important;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .patient-card:active { transform: scale(0.98); border-color: var(--accent); }
+        .order-badge {
+            border-radius: 12px 0 0 12px;
+            background-color: #f8fafc;
+            font-size: 0.8rem;
+        }
+        .dark-mode .shift-tab-btn { background: #1e2228; border-color: #3d4654; color: #b0bec5; }
+        .dark-mode .shift-tab-btn.active { background: var(--accent); color: white; }
         .dark-mode {
             --bg-body: #12151a;
             --bg-card: #1e2228;
@@ -870,10 +913,12 @@
         
         <div class="day-picker-card">
             <div class="day-picker-container">
-                <select id="dayPicker" class="form-select fw-bold" onchange="renderAll(); updateDayPickerDate();"></select>
+                <select id="dayPicker" class="form-select fw-bold" onchange="onDayPickerChange()"></select>
             </div>
         </div>
         
+        <!-- أزرار التنقل السريع (يتم إنشاؤها ديناميكياً بناءً على وجود المرضى) -->
+        <div class="shift-tabs-container" id="shiftTabs"></div>
         <div id="scheduleOutput"></div>
  
         <div class="footer-signature">
@@ -1327,6 +1372,44 @@
     </div>
 </div>
 
+<!-- مودال ضبط مواقيت الشفتات للإدارة -->
+<div class="modal fade" id="shiftTimingsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:15px;">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title fw-bold mb-0">ضبط مواقيت الشفتات</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <p class="small text-muted fw-bold mb-3">حدد وقت بداية كل شفت لفتح الجدول تلقائياً:</p>
+                <div class="d-flex flex-column gap-2" id="timingsInputsContainer">
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                        <span class="small fw-bold">الشفت 1:</span>
+                        <input type="time" id="timeShift1" class="form-control form-control-sm w-50">
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                        <span class="small fw-bold">الشفت 2:</span>
+                        <input type="time" id="timeShift2" class="form-control form-control-sm w-50">
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                        <span class="small fw-bold">الشفت 3:</span>
+                        <input type="time" id="timeShift3" class="form-control form-control-sm w-50">
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                        <span class="small fw-bold">الشفت 4:</span>
+                        <input type="time" id="timeShift4" class="form-control form-control-sm w-50">
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
+                        <span class="small fw-bold">الشفت 5:</span>
+                        <input type="time" id="timeShift5" class="form-control form-control-sm w-50">
+                    </div>
+                </div>
+                <button class="btn btn-primary w-100 fw-bold mt-3" onclick="saveShiftTimings()">حفظ المواقيت</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- مودال ضبط المؤقت للمريض السحابي -->
 <div class="modal fade" id="patientTimerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -1438,6 +1521,7 @@
     // استكمال المتغيرات البرمجية الأساسية لموقعك دون تغيير
     // ==========================================
     let dataStore = null;
+    let currentActiveShift = 0; // جعل الشفت الأول هو الخيار الافتراضي عند الفتح
     let currentShiftPatients = []; 
     let currentPatientIndex = -1;  
     let isAdminAuthenticated = false;
@@ -1779,7 +1863,13 @@
     function applyDataFromResponse(res, isBackground) {
         if (!res || !res.success) return;
         dataStore = res;
+
         if (res.theme) applyTheme(res.theme);
+        
+        // تنفيذ الفتح التلقائي للشفت قبل أي عملية رسم أخرى
+        if (!isBackground && res.shiftTimings) {
+            autoSelectShiftByTime(res.shiftTimings);
+        }
         
         // احتساب فرق التوقيت بين هاتف المستخدم وسيرفر جوجل لتجاوز أخطاء ساعات الهواتف يدوية الضبط وحل مشكلة الآيفون
         if (res.serverTime) {
@@ -1988,6 +2078,9 @@
         if(!dataStore) return;
         document.getElementById('monthVal').innerText = dataStore.month || '---';
         renderGeneralNotes();
+        
+        // حفظ الشفت المختار حالياً (سواء يدوياً أو عبر المواقيت) لعدم تصفيره
+        const savedShift = currentActiveShift;
         const picker = document.getElementById('dayPicker'); picker.innerHTML = '';
         const dates = getWeekDates(); // جلب قائمة تواريخ الأسبوع الحالية لدمجها بالداخل مباشرة
         DAYS_REF.forEach((d, i) => {
@@ -2014,19 +2107,135 @@
         if (el && idx >= 0 && dates[idx]) el.textContent = toArabicDigits(dates[idx]);
     }
 
+    function onDayPickerChange() {
+        const picker = document.getElementById('dayPicker');
+        if (!picker || !dataStore) return;
+        const selectedDay = picker.value;
+        const todayDay = dataStore.today ? dataStore.today.toString() : "";
+        
+        if (selectedDay !== todayDay) {
+            // إذا تم اختيار غير اليوم الحالي، نذهب تلقائياً إلى تبويب "الكل"
+            currentActiveShift = 'all';
+        } else {
+            // إذا عاد لليوم الحالي، نطبق ذكاء الشفتات المبني على الوقت تلقائياً
+            if (dataStore.shiftTimings) {
+                autoSelectShiftByTime(dataStore.shiftTimings);
+            }
+        }
+        renderAll();
+        updateDayPickerDate();
+    }
+
+    function filterShift(shiftId) {
+        currentActiveShift = shiftId;
+        // تحديث حالة الأزرار بصرياً
+        document.querySelectorAll('.shift-tab-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', shiftId === 'all' ? idx === 0 : (idx - 1) === shiftId);
+        });
+        renderAll();
+    }
+
+    function calculateAllDayStats(col) {
+        let m = 0, f = 0, total = 0;
+        // مراجعة جميع الصفوف الممكنة للمرضى (من 1 إلى 96)
+        for (let i = 1; i <= 96; i++) {
+            if (!dataStore.schedule[i]) continue;
+            let n = dataStore.schedule[i][col]?.toString().trim();
+            if (n && !DAYS_REF.includes(n)) {
+                total++;
+                let c = getContactInfo(n);
+                if (c.gender === "ذكر") m++; 
+                else if (c.gender && (c.gender.includes("نثى") || c.gender.includes("أنثى"))) f++;
+            }
+        }
+        return { m, f, total };
+    }
+
     function renderAll() {
         if(!dataStore || !dataStore.schedule) return;
         const col = document.getElementById('dayPicker').value;
         const shifts = [
-            { label: "الشفت الأول", main: [1, 16], post: [81, 82, 83, 84], id: 0 },
-            { label: "الشفت الثاني", main: [17, 32], post: [85, 86, 87, 88], id: 1 },
-            { label: "الشفت الثالث", main: [33, 48], post: [89, 90, 91, 92], id: 2 },
-            { label: "الشفت الرابع", main: [49, 64], post: [93, 94, 95, 96], id: 3 },
-            { label: "الشفت الخامس", main: [65, 80], post: [], id: 4 }
+            { label: "الأول", main: [1, 16], post: [81, 82, 83, 84], id: 0 },
+            { label: "الثاني", main: [17, 32], post: [85, 86, 87, 88], id: 1 },
+            { label: "الثالث", main: [33, 48], post: [89, 90, 91, 92], id: 2 },
+            { label: "الرابع", main: [49, 64], post: [93, 94, 95, 96], id: 3 },
+            { label: "الخامس", main: [65, 80], post: [], id: 4 }
         ];
-        let html = '';
-        let m = 0, f = 0, total = 0;
+        
+        // 1. تحديد أي الشفتات تحتوي على مرضى وبناء التبويبات
+        const tabsContainer = document.getElementById('shiftTabs');
+        let tabsHtml = '';
+        let activeShiftsIndices = [];
+
+        // 1. فحص وتحديد معرّفات الشفتات النشطة التي تحتوي على مرضى اليوم
         shifts.forEach(sh => {
+            let hasPatients = false;
+            for(let i=sh.main[0]; i<=sh.main[1]; i++) {
+                let n = dataStore.schedule[i]?.[col]?.toString().trim();
+                if(n && !DAYS_REF.includes(n)) { hasPatients = true; break; }
+            }
+            if(!hasPatients) {
+                sh.post.forEach(idx => {
+                    let n = dataStore.schedule[idx]?.[col]?.toString().trim();
+                    if(n && !DAYS_REF.includes(n)) { hasPatients = true; }
+                });
+            }
+            if(hasPatients) {
+                activeShiftsIndices.push(sh.id);
+            }
+        });
+
+        // ذكاء اختيار الشفتات الفعال لليوم الحالي فقط:
+        // إذا كان الشفت التلقائي المختار فارغاً اليوم، يتراجع تلقائياً لأقرب شفت متاح يحتوي على مرضى فعلياً
+        const todayCol = dataStore.today ? dataStore.today.toString() : "";
+        if (col === todayCol && currentActiveShift !== 'all' && activeShiftsIndices.length > 0 && !activeShiftsIndices.includes(currentActiveShift)) {
+            let selectedFallback = activeShiftsIndices[0];
+            for (let idx of activeShiftsIndices) {
+                if (idx < currentActiveShift) {
+                    selectedFallback = idx;
+                } else {
+                    break;
+                }
+            }
+            currentActiveShift = selectedFallback;
+        }
+
+        // 2. بناء الأزرار والتبويبات بصرياً بالاعتماد على الحالة النهائية للشفت المختار
+        shifts.forEach(sh => {
+            if (activeShiftsIndices.includes(sh.id)) {
+                const activeClass = (currentActiveShift === sh.id) ? 'active' : '';
+                tabsHtml += `<div class="shift-tab-btn ${activeClass}" onclick="filterShift(${sh.id})">شفت ${sh.label}</div>`;
+            }
+        });
+
+        // إضافة زر "الكل" في الأخير دائماً
+        const allActiveClass = (currentActiveShift === 'all') ? 'active' : '';
+        tabsHtml += `<div class="shift-tab-btn ${allActiveClass}" onclick="filterShift('all')">الكل</div>`;
+        
+        // إضافة أيقونة التوقيت فقط وتأمينها برمز التحقق الخاص بالنسخ
+        if (isAdminAuthenticated) {
+            tabsHtml += `<div class="shift-tab-btn" onclick="requestShiftTimingsAccess()" style="border-color: var(--accent); color: var(--accent);"><i class="fas fa-clock-rotate-left"></i></div>`;
+        }
+        
+        tabsContainer.innerHTML = tabsHtml;
+
+        // تصحيح الاختيار: إذا كان الشفت المختار حالياً أصبح مخفياً (فارغاً)، حوّل الاختيار لـ "الكل" تلقائياً
+        if (currentActiveShift !== 'all' && !activeShiftsIndices.includes(currentActiveShift)) {
+            // استثناء: لا نحول للكل إذا كان هذا هو الشفت الأول عند بداية التحميل (لأنه الدفلت)
+            // إلا إذا كان الشفت الأول فارغاً حقاً وهناك شفتات أخرى بها بيانات
+            if (activeShiftsIndices.length > 0) {
+                 // اترك المستخدم يرى شاشة فارغة في الشفت الأول أو انقل للكل؟ 
+                 // الأفضل للمستخدم البقاء على اختياره أو الانتقال لأول شفت متاح
+            }
+        }
+
+        let html = '';
+        const stats = calculateAllDayStats(col);
+
+        shifts.forEach(sh => {
+            // الفلترة الفعلية للعرض
+            if (currentActiveShift !== 'all' && currentActiveShift !== sh.id) return;
+
             let mainList = []; let postList = [];
             const add = (i, isP) => {
                 if (!dataStore.schedule[i]) return; 
@@ -2044,10 +2253,7 @@
             let pRows = '';
             
             combined.forEach((p, idx) => {
-                total++; if(p.c.gender === "ذكر") m++; else if(p.c.gender?.includes("نثى")) f++;
                 let bgColor = (p.clr && p.clr !== "#ffffff") ? p.clr : "transparent";
-                
-                // حساب لون الخط الأمثل للرقم تلقائياً لمنع اختفاء النص
                 let badgeColor = "inherit";
                 if (bgColor !== "transparent") {
                     const displayColors = getCellDisplayColors(bgColor);
@@ -2059,28 +2265,23 @@
                 let chips = '';
                 if (p.c.filter) chips += `<span class="info-chip">${p.c.filter}</span>`;
                 
-                // إضافة زر أو عداد المؤقت التنازلي للمريض
                 const timerState = getPatientTimerState(p.n);
                 if (timerState && timerState.active) {
                     chips += `<span class="info-chip chip-timer active-timer" onclick="event.stopPropagation(); openTimerModal('${escapeHtml(p.n)}')" id="timerChip_${escapeHtml(p.n)}">
                         <i class="fas fa-stopwatch me-1"></i> <span class="timer-countdown" data-patient="${escapeHtml(p.n)}" data-expiry="${timerState.expiry}">--:--:--</span>
                     </span>`;
                 } else {
-                    // عند عدم وجود مؤقت فعال: إظهار أيقونة الساعة فقط بدون كلمة "المؤقت" لتصغير حجم الزر تلقائياً
                     chips += `<span class="info-chip chip-timer" onclick="event.stopPropagation(); openTimerModal('${escapeHtml(p.n)}')" id="timerChip_${escapeHtml(p.n)}" title="المؤقت">
                         <i class="fas fa-stopwatch"></i>
                     </span>`;
                 }
 
-                
-                // تجهيز شارة P في متغير لوضعها قبل اسم المريض
                 let pTagHtml = p.isP ? `<span class="p-tag" style="margin-left: 4px; display: inline-block;">P</span>` : '';
                 
                 pRows += `<div class="patient-card" data-patient="${escapeHtml(p.n)}" onclick="viewPatientDetailByName(this.getAttribute('data-patient'))">
                     <div class="order-badge" style="background-color: ${bgColor}; color: ${badgeColor};">${idx + 1}</div>
                     <div class="p-info-body">
                         <div>
-                            <!-- عرض شارة P مع اسم المريض على سطر واحد (الشارة بعد الاسم) -->
                             <div class="d-flex align-items-center gap-1" style="min-width: 0;">
                                 <span class="patient-name" style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; min-width: 0;">${escapeHtml(p.n)}</span>
                                 ${pTagHtml}
@@ -2097,10 +2298,26 @@
                     </div>
                 </div>`;
             });
-            if(pRows) html += `<div class="shift-block"><div class="shift-header" onclick="openShiftSupply(${sh.id})"><span class="shift-header-shine" aria-hidden="true"></span><span style="position: relative; z-index: 1;">${sh.label}</span><span class="shift-count" style="position: relative; z-index: 1;">${combined.length} مريض</span></div><div class="shift-patients">${pRows}</div></div>`;
+            if(pRows) {
+                html += `<div class="shift-block">
+                    <div class="shift-header" onclick="openShiftSupply(${sh.id})">
+                        <span class="shift-header-shine" aria-hidden="true"></span>
+                        <span style="position: relative; z-index: 1;">الشفت ${sh.label}</span>
+                        <span class="shift-count" style="position: relative; z-index: 1;">${combined.length} مريض</span>
+                    </div>
+                    <div class="shift-patients">${pRows}</div>
+                </div>`;
+            }
         });
-        document.getElementById('maleCount').innerText = m; document.getElementById('femaleCount').innerText = f;
-        document.getElementById('totalCount').innerText = total; document.getElementById('scheduleOutput').innerHTML = html;
+
+        if (!html && currentActiveShift !== 'all') {
+            html = `<div class="text-center p-5 text-muted fw-bold">لا يوجد مرضى في هذا الشفت اليوم</div>`;
+        }
+
+        document.getElementById('maleCount').innerText = stats.m; 
+        document.getElementById('femaleCount').innerText = stats.f;
+        document.getElementById('totalCount').innerText = stats.total; 
+        document.getElementById('scheduleOutput').innerHTML = html;
         updateAdminUI();
         syncShines();
     }
@@ -3350,6 +3567,10 @@
     function openPatientEditFromView(patientName, rowIdx, dayCol) {
         if (!patientName || !rowIdx || !dayCol) return;
 
+        // تصفير اختيار المريض المستبدل فوراً عند فتح نافذة مريض جديد
+        const pSelect = document.getElementById('colorOnlyPatientSelect');
+        if (pSelect) pSelect.value = ""; 
+
         if (!scheduleEditPanelOpen) {
             showScheduleEditPanel(false);
         }
@@ -3393,8 +3614,8 @@
         const pSelect = document.getElementById('colorOnlyPatientSelect');
         if (!editorMeta || !editorColors || !pSelect) return;
 
-        // حفظ خيار المريض المحدد حالياً لتفادي تصفيره عند تغيير اللون
-        const currentSelectedVal = pSelect.value || "";
+        // تم حذف سطر حفظ القيمة القديمة لمنع تكرار المريض السابق
+        const currentSelectedVal = pSelect.value || ""; 
 
         const dayName = DAYS_REF[col - 1] || '';
         const blockInfo = findShiftBlockByRow(row);
@@ -3444,16 +3665,18 @@
     function saveColorOnlyEditsDirect() {
         if (!colorOnlyEditorSlot) return;
         const { patientName, row, col } = colorOnlyEditorSlot;
-        const selectVal = document.getElementById('colorOnlyPatientSelect').value.trim();
+        const selectEl = document.getElementById('colorOnlyPatientSelect');
+        const selectVal = selectEl ? selectEl.value.trim() : "";
         
-        // استبدال الاسم في المسودة المحلية إذا تم اختيار اسم مريض جديد
         if (selectVal) {
             if (!scheduleEditDraft.schedule[row]) scheduleEditDraft.schedule[row] = [];
             scheduleEditDraft.schedule[row][col] = selectVal;
             trackScheduleChange(row, col, "value", selectVal);
         }
 
-        // إرسال وحفظ كافة التغييرات (الاسم واللون) إلى السيرفر
+        // بعد الحفظ، نصفر القائمة المنسدلة فوراً لكي لا تنتقل للمريض التالي
+        if (selectEl) selectEl.value = "";
+
         saveScheduleEdits();
     }
 
@@ -5181,6 +5404,97 @@ function executeEndSession() {
             btn.innerHTML = '<i class="fas fa-stop me-2"></i> إيقاف وإلغاء المؤقت';
             alert("خطأ الاتصال بالسيرفر: " + err.message);
         }).setPatientTimerServer(currentTimerPatient, ""); // إرسال نص فارغ لإلغاء المؤقت في الخادم
+    }
+
+    // دالة الفتح التلقائي للشفت بناءً على الوقت الحالي ومواقيت الشيت
+    function autoSelectShiftByTime(timings) {
+        if (!timings || timings.length < 5) return;
+        
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes(); // الوقت الحالي بالدقائق
+        
+        let detectedShift = 0; // افتراضياً الشفت الأول
+
+        // تحويل أوقات الشيت (HH:mm) إلى دقائق ومقارنتها
+        for (let i = 4; i >= 0; i--) {
+            if (timings[i]) {
+                const parts = timings[i].split(':');
+                const shiftMinutes = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+                
+                if (currentTime >= shiftMinutes) {
+                    detectedShift = i;
+                    break;
+                }
+            }
+        }
+        currentActiveShift = detectedShift;
+    }
+
+    function openShiftTimingsModal() {
+        if (!dataStore || !dataStore.shiftTimings) return;
+        
+        for (let i = 0; i < 5; i++) {
+            const timeVal = dataStore.shiftTimings[i];
+            if (timeVal) {
+                const formattedTime = formatTimeToInput(timeVal);
+                document.getElementById(`timeShift${i+1}`).value = formattedTime;
+            }
+        }
+        
+        const el = document.getElementById('shiftTimingsModal');
+        let mdl = bootstrap.Modal.getInstance(el);
+        if (!mdl) mdl = new bootstrap.Modal(el);
+        mdl.show();
+    }
+
+    function formatTimeToInput(timeStr) {
+        if (!timeStr) return "";
+        let t = timeStr.toString().trim();
+        // تصحيح الوقت إذا كان ينقصه صفر (مثلاً 9:00 يحولها 09:00) ليقبله حقل الوقت
+        if (t.includes(':')) {
+            let p = t.split(':');
+            if (p[0].length === 1) p[0] = '0' + p[0];
+            t = p[0] + ':' + p[1];
+        }
+        return t;
+    }
+
+    function requestShiftTimingsAccess() {
+        const pwd = prompt("الرجاء إدخال الرمز الخاص لفتح ضبط المواقيت:");
+        if (!pwd) return;
+        
+        google.script.run.withSuccessHandler(res => {
+            if (res && res.success && res.authenticated) {
+                window._shiftTimingsVerifiedPwd = pwd; // حفظ الرمز لاستخدامه عند إرسال طلب الحفظ
+                openShiftTimingsModal();
+            } else {
+                alert("❌ الرمز السري غير صحيح أو غير مصرح لك بالتعديل!");
+            }
+        }).verifyCopyKey(pwd);
+    }
+
+    function saveShiftTimings() {
+        const pwd = window._shiftTimingsVerifiedPwd || scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء إدخال الرمز الخاص بالتعديل أولاً");
+        
+        const timings = [
+            document.getElementById('timeShift1').value,
+            document.getElementById('timeShift2').value,
+            document.getElementById('timeShift3').value,
+            document.getElementById('timeShift4').value,
+            document.getElementById('timeShift5').value
+        ];
+
+        google.script.run.withSuccessHandler(res => {
+            if (res.success) {
+                alert("✅ تم حفظ مواقيت الشفتات بنجاح");
+                dataStore.shiftTimings = timings;
+                bootstrap.Modal.getInstance(document.getElementById('shiftTimingsModal')).hide();
+                renderAll();
+            } else {
+                alert("❌ فشل الحفظ: " + res.error);
+            }
+        }).saveShiftTimingsServer(pwd, timings);
     }
 </script>
 </body>
