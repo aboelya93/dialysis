@@ -4380,7 +4380,10 @@
         const sorted = [...list].sort((a,b) => (a["اسم المريض"] || "").localeCompare((b["اسم المريض"] || ""), 'ar'));
         document.getElementById('pListArea').innerHTML = sorted.map((p, idx) => {
             let arabicIdx = toArabicDigits(idx + 1); 
-            return `<div class="p-2 border-bottom fw-bold mb-1 rounded shadow-sm d-flex align-items-center justify-content-start patient-search-row" data-name="${escapeHtml(p["اسم المريض"])}" onclick="viewPatientDetail('${escapeHtml(p["اسم المريض"]).replace(/'/g, "\\'")}')"><span class="badge bg-light text-secondary border me-2 px-2 py-1" style="font-size: 0.75rem; border-radius: 6px; font-weight: 800; min-width: 30px; text-align: center;">${arabicIdx}</span><span class="search-target-name">${escapeHtml(p["اسم المريض"])}</span></div>`;
+            const pName = p["اسم المريض"] || "";
+            const hasNote = !!(p["ملاحظات"] || (dataStore?.contacts?.[pName]?.notes));
+            const noteIcon = hasNote ? `<span class="ms-auto text-danger" title="توجد ملاحظة"><i class="fas fa-comment-dots"></i></span>` : '';
+            return `<div class="p-2 border-bottom fw-bold mb-1 rounded shadow-sm d-flex align-items-center justify-content-between patient-search-row" data-name="${escapeHtml(pName)}" onclick="viewPatientDetail('${escapeHtml(pName).replace(/'/g, "\\'")}')"><div class="d-flex align-items-center"><span class="badge bg-light text-secondary border me-2 px-2 py-1" style="font-size: 0.75rem; border-radius: 6px; font-weight: 800; min-width: 30px; text-align: center;">${arabicIdx}</span><span class="search-target-name">${escapeHtml(pName)}</span></div>${noteIcon}</div>`;
         }).join('');
     }
     
@@ -4418,7 +4421,8 @@
                     <div class="mb-3 p-2 border rounded bg-warning bg-opacity-10">
                         <b class="small text-danger mb-1 d-block"><i class="fas fa-comment-dots ms-1"></i> ملاحظة المريض:</b>
                         <div class="input-group">
-                            <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" value="${escapeHtml(personalNote)}">
+                            <button class="btn btn-outline-danger btn-sm" onclick="deletePatientPersonalNote('${escapeHtml(fullName).replace(/'/g, "\\'")}')" title="حذف الملاحظة"><i class="fas fa-trash-alt"></i></button>
+                            <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" value="${escapeHtml(personalNote)}" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
                             <button class="btn btn-danger btn-sm" onclick="savePatientPersonalNote('${escapeHtml(fullName).replace(/'/g, "\\'")}')"><i class="fas fa-check"></i></button>
                         </div>
                     </div>
@@ -4436,7 +4440,7 @@
                 <div class="mb-3 p-2 border rounded bg-warning bg-opacity-10">
                     <b class="small text-danger mb-1 d-block"><i class="fas fa-comment-dots ms-1"></i> ملاحظة المريض:</b>
                     <div class="input-group">
-                        <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" placeholder="أضف ملاحظة خاصة بالمريض...">
+                        <input type="text" id="patientPersonalNoteInput" class="form-control form-control-sm fw-bold" placeholder="أضف ملاحظة خاصة بالمريض..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
                         <button class="btn btn-danger btn-sm" onclick="savePatientPersonalNote('${escapeHtml(fullName).replace(/'/g, "\\'")}')"><i class="fas fa-check"></i></button>
                     </div>
                 </div>
@@ -4942,6 +4946,23 @@
                 alert("❌ فشل الحفظ: " + res.error);
             }
         }).updatePatientNote(pwd, fullName, noteText);
+    }
+
+    // حذف ملاحظة المريض الشخصية فورياً
+    function deletePatientPersonalNote(fullName) {
+        const pwd = scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء تسجيل الدخول أولاً كمسؤول.");
+        const inp = document.getElementById('patientPersonalNoteInput');
+        if (inp) inp.value = '';
+
+        google.script.run.withSuccessHandler(res => {
+            if (res.success) {
+                alert("✅ تم حذف ملاحظة المريض بنجاح!");
+                fetchDataFromServer(true);
+            } else {
+                alert("❌ فشل الحذف: " + res.error);
+            }
+        }).updatePatientNote(pwd, fullName, '');
     }
 
     function deletePatientConfirm(fullName) {
