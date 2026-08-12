@@ -851,9 +851,14 @@
 <div class="container-fluid">
     <div id="headerSection" class="app-header-card">
         <div class="app-title-wrap">
-            <!-- أيقونة تسجيل دخول المسؤول في أقصى اليسار دون التأثير على التوسيط -->
+            <!-- أيقونة تسجيل دخول المسؤول في أقصى اليسار -->
             <button id="adminLoginBtn" class="action-btn" onclick="openAdminLoginModal()" style="position: absolute; left: 0; width: 36px; height: 36px; border-radius: 50%; box-shadow: var(--shadow-sm);" title="تسجيل دخول المسؤول">
                 <i class="fas fa-user-lock text-muted"></i>
+            </button>
+
+            <!-- زر لوحة الإحصائيات للتحكم بوضع الإدارة أقصى اليمين -->
+            <button id="adminStatsBtn" class="action-btn admin-only" onclick="openAdminStatsModal()" style="position: absolute; right: 0; width: 36px; height: 36px; border-radius: 50%; box-shadow: var(--shadow-sm); display: none;" title="لوحة الإحصائيات والترحيل">
+                <i class="fas fa-chart-line text-primary"></i>
             </button>
             
             <!-- نصوص العنوان موسطة 100% بالكامل بعد حذف اللوغو -->
@@ -1122,13 +1127,6 @@
                     <b class="small text-muted d-block mb-1">إضافة ملاحظة جديدة:</b>
                     <div class="d-flex flex-column gap-1">
                         <textarea id="newGenNoteInput" class="form-control form-control-sm fw-bold" rows="2" placeholder="اكتب الملاحظة الجديدة هنا..." style="border-radius: 8px; font-size: 0.75rem; resize: vertical;"></textarea>
-                        
-                        <!-- إدخال تاريخ ووقت انتهاء الملاحظة بشكل متجاور وبسيط يدعم منتقي التواريخ للهواتف -->
-                        <div class="d-flex align-items-center justify-content-center gap-1 my-1 p-1 rounded border bg-light" style="font-size: 0.7rem; flex-wrap: wrap;">
-                            <span class="fw-bold text-muted">حذف تلقائي في:</span>
-                            <input type="date" id="newGenNoteDate" class="form-control form-control-sm fw-bold text-center p-1" style="width: 110px; font-size: 0.7rem;">
-                            <input type="time" id="newGenNoteTime" class="form-control form-control-sm fw-bold text-center p-1" style="width: 70px; font-size: 0.7rem;">
-                        </div>
 
                         <!-- اختيار لون الخط للملاحظة الجديدة -->
                         <div class="d-flex align-items-center justify-content-center gap-2 mb-1 p-1 rounded border bg-light" style="font-size: 0.7rem;">
@@ -1299,6 +1297,141 @@
         <i class="fas fa-save"></i>
         <span class="schedule-save-fab-label">حفظ التغييرات</span>
     </button>
+</div>
+
+<!-- مودال لوحة الإحصائيات وأرشيف الغسلات الخاص بالإدارة -->
+<div class="modal fade" id="adminStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:15px;">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-chart-line ms-1"></i> إحصائيات الغسلات</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <button class="btn btn-sm btn-success w-100 fw-bold mb-3" onclick="executeManualStatsRollover()">
+                    <i class="fas fa-save me-1"></i> ترحيل غسلات اليوم المختار الآن
+                </button>
+                <div class="modal-nav-tabs mb-2">
+                    <div class="modal-nav-tab active" id="tabStatsMonth" onclick="switchStatsTab('month')">إحصائية الشهر</div>
+                    <div class="modal-nav-tab" id="tabStatsRange" onclick="switchStatsTab('range')">بين تاريخين</div>
+                </div>
+
+                <!-- تبويب إحصائية الشهر -->
+                <div id="viewStatsMonth">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-1">السنة:</label>
+                            <select id="statsYearSelect" class="form-select form-select-sm fw-bold" onchange="renderMonthlyStatsView()"></select>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-1">الشهر:</label>
+                            <select id="statsMonthSelect" class="form-select form-select-sm fw-bold" onchange="renderMonthlyStatsView()"></select>
+                        </div>
+                    </div>
+                    <div id="adminStatsArea" style="max-height: 220px; overflow-y: auto;">
+                        <div class="text-center text-muted small py-3">جاري جلب البيانات...</div>
+                    </div>
+                    <div id="monthTotalBanner" class="p-2 mt-2 border rounded text-center bg-light fw-bold small" style="display:none;">
+                        إجمالي غسلات الشهر المختار: <span id="monthlyTotalSumVal" class="text-primary fs-6">0</span>
+                    </div>
+                </div>
+
+                <!-- تبويب بين تاريخين -->
+                <div id="viewStatsRange" style="display:none;">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-1">من تاريخ:</label>
+                            <input type="date" id="statsFromDate" class="form-control form-control-sm fw-bold" onchange="calculateRangeStats()">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold text-muted mb-1">إلى تاريخ:</label>
+                            <input type="date" id="statsToDate" class="form-control form-control-sm fw-bold" onchange="calculateRangeStats()">
+                        </div>
+                    </div>
+                    <div id="rangeStatsResult" class="p-2 border rounded text-center bg-light mt-2" style="display:none;">
+                        <div class="small fw-bold text-muted mb-1">نتيجة المجموع للفترة المحددة:</div>
+                        <div class="d-flex justify-content-around fw-bold small mb-2">
+                            <div>ذكور: <span id="rangeMaleVal" class="text-info">0</span></div>
+                            <div>إناث: <span id="rangeFemaleVal" class="text-danger">0</span></div>
+                            <div>الكلي: <span id="rangeTotalVal" class="text-primary fs-6">0</span></div>
+                        </div>
+                        <button type="button" id="exportRangeStatsImgBtn" class="btn btn-sm btn-outline-primary w-100 fw-bold" onclick="exportRangeStatsAsImage()" style="display:none;">
+                            <i class="fas fa-image me-1"></i> تصدير التقرير كصورة (1x1)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- كرت التصدير الاحترافي أبعاد 1x1 المخصص للتصوير -->
+                <div id="rangeStatsExportCardWrap" style="position:fixed; left:-9999px; top:-9999px; pointer-events:none;">
+                    <div id="rangeStatsExportCard" style="width:600px; height:600px; background:#ffffff; color:#2c3e50; font-family:'Tajawal', sans-serif; display:flex; flex-direction:column; justify-content:space-around; padding:32px 30px; box-sizing:border-box; border-radius:24px; border:3px solid #1565c0; text-align:center;">
+                        <div style="background:linear-gradient(135deg, #1565c0 0%, #1976d2 100%); color:#ffffff; padding:16px; border-radius:16px; font-size:1.75rem; font-weight:800;">
+                            وحدة غسيل الكلى
+                        </div>
+                        
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:14px; display:flex; justify-content:space-around; align-items:center;">
+                            <div>
+                                <div style="font-size:1rem; font-weight:700; color:#64748b;">من</div>
+                                <div id="expFromDate" style="font-size:1.3rem; font-weight:800; color:#1e293b; margin-top:2px;">---</div>
+                            </div>
+                            <div style="font-size:1.4rem; color:#94a3b8; font-weight:800;">←</div>
+                            <div>
+                                <div style="font-size:1rem; font-weight:700; color:#64748b;">إلى</div>
+                                <div id="expToDate" style="font-size:1.3rem; font-weight:800; color:#1e293b; margin-top:2px;">---</div>
+                            </div>
+                        </div>
+
+                        <div style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border:1.5px solid #bfdbfe; border-radius:16px; padding:14px;">
+                            <div style="font-size:1.15rem; font-weight:800; color:#1e40af;">عدد الغسلات الكلي</div>
+                            <div id="expTotalVal" style="font-size:2.6rem; font-weight:900; color:#1d4ed8; line-height:1.2; margin-top:2px;">0</div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                            <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:16px; padding:12px;">
+                                <div style="font-size:1.05rem; font-weight:800; color:#166534;">الذكور</div>
+                                <div id="expMaleVal" style="font-size:2.1rem; font-weight:900; color:#15803d; margin-top:2px;">0</div>
+                            </div>
+                            <div style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:16px; padding:12px;">
+                                <div style="font-size:1.05rem; font-weight:800; color:#991b1b;">الاناث</div>
+                                <div id="expFemaleVal" style="font-size:2.1rem; font-weight:900; color:#b91c1c; margin-top:2px;">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة تعديل / حذف إحصائية يوم معين -->
+<div class="modal fade" id="editDayStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:15px;">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title fw-bold mb-0" id="editDayStatsTitle">تعديل إحصائية اليوم</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <input type="hidden" id="editDayStatsDate">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="small fw-bold text-muted mb-1">عدد الذكور:</label>
+                        <input type="number" id="editDayMaleInput" class="form-control form-control-sm fw-bold" oninput="updateEditDayTotalSum()">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold text-muted mb-1">عدد الإناث:</label>
+                        <input type="number" id="editDayFemaleInput" class="form-control form-control-sm fw-bold" oninput="updateEditDayTotalSum()">
+                    </div>
+                </div>
+                <div class="text-center fw-bold small mb-3">
+                    المجموع الكلي التلقائي: <span id="editDayTotalSum" class="text-primary fs-6">0</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary btn-sm flex-fill fw-bold" onclick="saveDayStatsEdit()"><i class="fas fa-check me-1"></i> حفظ</button>
+                    <button class="btn btn-danger btn-sm flex-fill fw-bold" onclick="deleteDayStatsEdit()"><i class="fas fa-trash-alt me-1"></i> حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- مودال تسجيل دخول المسؤول الموحد -->
@@ -1751,23 +1884,8 @@
         const sessionDate = getStoredAdminSessionDate();
         if (!pwd || sessionDate !== getTodayDateKey()) return;
         
-        // منح الصلاحية الإدارية محلياً فوراً لضمان عدم طرد المسؤول عند تصفح الموقع والإنترنت مقطوع صباحاً
+        // منح الصلاحية الإدارية محلياً فوراً دون إعاقة وتأخير طلب جلب البيانات الأساسي
         grantAdminAccess(pwd);
-        
-        google.script.run.withSuccessHandler(res => {
-            if (res.success && res.authenticated) {
-                // إذا تم الاتصال بنجاح وتأكد الرمز، نثبت الجلسة سحابياً
-                grantAdminAccess(pwd);
-            } else {
-                // إذا تم الاتصال والرمز خاطئ (تم تغييره مثلاً)، نزيل الصلاحية ونخرج
-                logoutAdminSession();
-                renderAll();
-                renderGeneralNotes();
-            }
-        }).withFailureHandler(function() {
-            // إذا فشل الاتصال بالشبكة بسبب قطوعات الإنترنت الصباحية، نحتفظ بالصلاحية المحلية المؤقتة ولا نطرد المسؤول
-            console.log("تم الحفاظ على وضع الصلاحية المحلية المؤقتة لعدم توفر اتصال بالإنترنت حالياً.");
-        }).verifyAdminKey(pwd);
     }
 
     function initPwaSupport() {
@@ -1877,6 +1995,9 @@
         dataStore = res;
 
         if (res.theme) applyTheme(res.theme);
+        if (document.getElementById('monthVal')) {
+            document.getElementById('monthVal').innerText = res.month || '---';
+        }
         
         // تنفيذ الفتح التلقائي للشفت قبل أي عملية رسم أخرى
         if (!isBackground && res.shiftTimings) {
@@ -1972,6 +2093,242 @@
         syncShines();
     }
 
+function openAdminStatsModal() {
+        if (!isAdminAuthenticated) return alert("هذه اللوحة خاصة بوضع الإدارة فقط");
+        initStatsYearMonthSelectors();
+        switchStatsTab('month');
+        
+        const el = document.getElementById('adminStatsModal');
+        let mdl = bootstrap.Modal.getInstance(el);
+        if (!mdl) mdl = new bootstrap.Modal(el);
+        mdl.show();
+
+        loadAdminStats();
+    }
+
+    function initStatsYearMonthSelectors() {
+        const ySel = document.getElementById('statsYearSelect');
+        const mSel = document.getElementById('statsMonthSelect');
+        if (!ySel || !mSel) return;
+
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth() + 1;
+
+        let yHtml = '';
+        for (let y = curYear + 1; y >= 2024; y--) {
+            yHtml += `<option value="${y}"${y === curYear ? ' selected' : ''}>${y}</option>`;
+        }
+        ySel.innerHTML = yHtml;
+
+        const monthNames = ["كانون الثاني (1)", "شباط (2)", "آذار (3)", "نيسان (4)", "أيار (5)", "حزيران (6)", "تموز (7)", "آب (8)", "أيلول (9)", "تشرين الأول (10)", "تشرين الثاني (11)", "كانون الأول (12)"];
+        let mHtml = monthNames.map((n, i) => `<option value="${i + 1}"${(i + 1) === curMonth ? ' selected' : ''}>${n}</option>`).join('');
+        mSel.innerHTML = mHtml;
+    }
+
+    function switchStatsTab(tab) {
+        document.getElementById('tabStatsMonth').classList.toggle('active', tab === 'month');
+        document.getElementById('tabStatsRange').classList.toggle('active', tab === 'range');
+        document.getElementById('viewStatsMonth').style.display = tab === 'month' ? 'block' : 'none';
+        document.getElementById('viewStatsRange').style.display = tab === 'range' ? 'block' : 'none';
+    }
+
+    function loadAdminStats() {
+        renderMonthlyStatsView();
+    }
+
+    function getDayNameFromDateStr(dateStr) {
+        if (!dateStr) return "---";
+        const parts = dateStr.split('/');
+        if (parts.length < 3) return "---";
+        const d = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        const arDays = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        return isNaN(d.getTime()) ? "---" : arDays[d.getDay()];
+    }
+
+    function renderMonthlyStatsView() {
+        const area = document.getElementById('adminStatsArea');
+        const totalBanner = document.getElementById('monthTotalBanner');
+        const yVal = parseInt(document.getElementById('statsYearSelect').value, 10);
+        const mVal = parseInt(document.getElementById('statsMonthSelect').value, 10);
+        if (!area || !yVal || !mVal) return;
+
+        area.innerHTML = '<div class="text-center text-muted small py-3"><i class="fas fa-spinner fa-spin me-1"></i> جاري جلب إحصائيات الشهر...</div>';
+        if (totalBanner) totalBanner.style.display = 'none';
+
+        google.script.run.withSuccessHandler(res => {
+            if (!res || !res.success || !res.stats || !res.stats.length) {
+                area.innerHTML = '<div class="text-center text-muted small py-3">لا توجد إحصائيات مرحلة لهذا الشهر</div>';
+                if (totalBanner) totalBanner.style.display = 'none';
+                return;
+            }
+
+            // ترتيب الإحصائيات تنازلياً ليكون التاريخ الأحدث (الأقرب) في الأعلى دائماً
+            res.stats.sort((a, b) => {
+                const pA = (a.date || '').split('/');
+                const pB = (b.date || '').split('/');
+                if (pA.length === 3 && pB.length === 3) {
+                    const dA = new Date(parseInt(pA[2], 10), parseInt(pA[1], 10) - 1, parseInt(pA[0], 10));
+                    const dB = new Date(parseInt(pB[2], 10), parseInt(pB[1], 10) - 1, parseInt(pB[0], 10));
+                    return dB - dA;
+                }
+                return 0;
+            });
+
+            let monthTotalSum = 0;
+            let html = '<table class="sch-table"><thead><tr><th>التاريخ</th><th>اليوم</th><th>ذكور</th><th>إناث</th><th>الكلي</th></tr></thead><tbody>';
+            res.stats.forEach(s => {
+                const dayName = getDayNameFromDateStr(s.date);
+                monthTotalSum += Number(s.total) || 0;
+                html += `<tr class="clickable" onclick="openEditDayStatsModal('${escapeHtml(s.date)}', ${s.male}, ${s.female})"><td>${escapeHtml(s.date)}</td><td class="text-muted fw-bold">${dayName}</td><td>${toArabicDigits(s.male)}</td><td>${toArabicDigits(s.female)}</td><td class="fw-bold text-primary">${toArabicDigits(s.total)}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            area.innerHTML = html;
+
+            if (totalBanner) {
+                document.getElementById('monthlyTotalSumVal').innerText = toArabicDigits(monthTotalSum);
+                totalBanner.style.display = 'block';
+            }
+        }).withFailureHandler(err => {
+            area.innerHTML = '<div class="text-center text-danger small py-3">تعذر جلب الإحصائيات، أعد المحاولة</div>';
+            if (totalBanner) totalBanner.style.display = 'none';
+        }).getStatsForMonth(yVal, mVal);
+    }
+
+    function openEditDayStatsModal(dateStr, male, female) {
+        document.getElementById('editDayStatsTitle').innerText = "تعديل يوم: " + dateStr;
+        document.getElementById('editDayStatsDate').value = dateStr;
+        document.getElementById('editDayMaleInput').value = male;
+        document.getElementById('editDayFemaleInput').value = female;
+        updateEditDayTotalSum();
+
+        const el = document.getElementById('editDayStatsModal');
+        let mdl = bootstrap.Modal.getInstance(el);
+        if (!mdl) mdl = new bootstrap.Modal(el);
+        mdl.show();
+    }
+
+    function updateEditDayTotalSum() {
+        const m = parseInt(document.getElementById('editDayMaleInput').value, 10) || 0;
+        const f = parseInt(document.getElementById('editDayFemaleInput').value, 10) || 0;
+        document.getElementById('editDayTotalSum').innerText = toArabicDigits(m + f);
+    }
+
+    function saveDayStatsEdit() {
+        const pwd = scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
+        const dateStr = document.getElementById('editDayStatsDate').value;
+        const male = parseInt(document.getElementById('editDayMaleInput').value, 10) || 0;
+        const female = parseInt(document.getElementById('editDayFemaleInput').value, 10) || 0;
+
+        google.script.run.withSuccessHandler(res => {
+            if (res && res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
+                renderMonthlyStatsView();
+            } else {
+                alert("❌ فشل التعديل: " + (res ? res.error : 'خطأ غير معروف'));
+            }
+        }).withFailureHandler(err => {
+            alert("❌ خطأ أثناء التعديل: " + err.message);
+        }).updateDailyStatsRow(pwd, dateStr, male, female);
+    }
+
+    function deleteDayStatsEdit() {
+        const pwd = scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
+        const dateStr = document.getElementById('editDayStatsDate').value;
+        if (!confirm(`هل أنت متأكد من حذف إحصائية يوم (${dateStr}) نهائياً؟`)) return;
+
+        google.script.run.withSuccessHandler(res => {
+            if (res && res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editDayStatsModal'))?.hide();
+                renderMonthlyStatsView();
+            } else {
+                alert("❌ فشل الحذف: " + (res ? res.error : 'خطأ غير معروف'));
+            }
+        }).withFailureHandler(err => {
+            alert("❌ خطأ أثناء الحذف: " + err.message);
+        }).deleteDailyStatsRow(pwd, dateStr);
+    }
+
+    function calculateRangeStats() {
+        const fromVal = document.getElementById('statsFromDate').value;
+        const toVal = document.getElementById('statsToDate').value;
+        const resCard = document.getElementById('rangeStatsResult');
+        const exportBtn = document.getElementById('exportRangeStatsImgBtn');
+        if (!fromVal || !toVal || !resCard) return;
+
+        resCard.style.display = 'block';
+        if (exportBtn) exportBtn.style.display = 'none';
+        document.getElementById('rangeMaleVal').innerText = "...";
+        document.getElementById('rangeFemaleVal').innerText = "...";
+        document.getElementById('rangeTotalVal').innerText = "...";
+
+        google.script.run.withSuccessHandler(res => {
+            if (res && res.success) {
+                const maleStr = toArabicDigits(res.male);
+                const femaleStr = toArabicDigits(res.female);
+                const totalStr = toArabicDigits(res.total);
+
+                document.getElementById('rangeMaleVal').innerText = maleStr;
+                document.getElementById('rangeFemaleVal').innerText = femaleStr;
+                document.getElementById('rangeTotalVal').innerText = totalStr;
+
+                // تحديث بيانات كرت التصدير المربع (1x1) بالأرقام الإنجليزية المباشرة
+                const fromParts = fromVal.split('-');
+                const toParts = toVal.split('-');
+                const fromFormatted = fromParts.length === 3 ? `${fromParts[2]}/${fromParts[1]}/${fromParts[0]}` : fromVal;
+                const toFormatted = toParts.length === 3 ? `${toParts[2]}/${toParts[1]}/${toParts[0]}` : toVal;
+
+                document.getElementById('expFromDate').innerText = fromFormatted;
+                document.getElementById('expToDate').innerText = toFormatted;
+                document.getElementById('expTotalVal').innerText = res.total;
+                document.getElementById('expMaleVal').innerText = res.male;
+                document.getElementById('expFemaleVal').innerText = res.female;
+
+                if (exportBtn) exportBtn.style.display = 'block';
+            }
+        }).getStatsForRange(fromVal, toVal);
+    }
+
+    function exportRangeStatsAsImage() {
+        const card = document.getElementById('rangeStatsExportCard');
+        if (!card) return;
+
+        const fromVal = document.getElementById('statsFromDate').value || 'تاريخ';
+        const toVal = document.getElementById('statsToDate').value || 'تاريخ';
+
+        html2canvas(card, {
+            scale: 3, // دقة عالية جداً (HD)
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `تقرير_وحدة_الغسيل_${fromVal}_إلى_${toVal}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            alert("تعذر تصدير الصورة: " + err.message);
+        });
+    }
+
+    function executeManualStatsRollover() {
+        const pwd = scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
+        const dayCol = parseInt(document.getElementById('dayPicker').value, 10) || 1;
+        const dayName = DAYS_REF[dayCol - 1] || "";
+        if (!confirm(`هل تريد ترحيل/تحديث إحصائية غسلات (يوم ${dayName}) المختار للأسبوع الحالي؟`)) return;
+
+        google.script.run.withSuccessHandler(res => {
+            if (res && res.success) {
+                alert(`✅ تم ترحيل وحفظ إحصائية (يوم ${dayName}) بنجاح في شيت 'الاحصائيات'`);
+                renderMonthlyStatsView();
+            } else {
+                alert("❌ فشل الترحيل: " + (res ? res.error : ''));
+            }
+        }).recordDailyStatsManual(pwd, dayCol);
+    }
+
     function openAdminLoginModal() {
         if (isAdminAuthenticated) {
             logoutAdminSession();
@@ -2016,19 +2373,11 @@
 
     function fetchDataFromServer(isBackground) {
         isFetchingFreshData = true;
-        if (!isBackground) {
-            if (loadDataCache()) setStaleDataUI(true);
-            else {
-                setStaleDataUI(false);
-                showInitialLoader();
-            }
-        }
 
         google.script.run.withSuccessHandler(res => {
             isFetchingFreshData = false;
             if (!res || !res.success) {
-                if (loadDataCache() || dataStore) setStaleDataUI(true);
-                else setStaleDataUI(false);
+                setStaleDataUI(false);
                 hideInitialLoader();
                 return;
             }
@@ -2038,8 +2387,7 @@
             hideInitialLoader();
         }).withFailureHandler(function() {
             isFetchingFreshData = false;
-            if (loadDataCache() || dataStore) setStaleDataUI(true);
-            else setStaleDataUI(false);
+            setStaleDataUI(false);
             hideInitialLoader();
         }).getUnifiedData();
     }
@@ -4861,24 +5209,10 @@
             return alert("الحد الأقصى 15 ملاحظة! احذف ملاحظة لتوفير مكان.");
         }
         
-        const dateVal = document.getElementById('newGenNoteDate').value;
-        const timeVal = document.getElementById('newGenNoteTime').value || "00:00";
         const colorVal = document.getElementById('newGenNoteColor').value || "#000000";
         
-        let expiryTime = "";
-        if (dateVal) {
-            const dateTimeStr = `${dateVal}T${timeVal}`;
-            const expiryLocal = new Date(dateTimeStr);
-            if (!isNaN(expiryLocal.getTime())) {
-                const syncedExpiryMs = expiryLocal.getTime() - (window.clientServerOffset || 0);
-                expiryTime = new Date(syncedExpiryMs).toISOString();
-            }
-        }
-        
-        genNotesDraft.push({ text: text, expiry: expiryTime, color: colorVal });
+        genNotesDraft.push({ text: text, color: colorVal });
         inp.value = '';
-        document.getElementById('newGenNoteDate').value = '';
-        document.getElementById('newGenNoteTime').value = '';
         document.getElementById('newGenNoteColor').value = '#000000';
         renderGenNotesEditList();
     }
@@ -5579,4 +5913,3 @@ function executeEndSession() {
 </script>
 </body>
 </html>
- 
