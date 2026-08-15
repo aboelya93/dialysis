@@ -1011,32 +1011,34 @@
             <div class="stat-item"><i class="fas fa-calendar-alt text-warning"></i> <span class="stat-value" id="monthVal">---</span><div class="stat-label">الشهر</div></div>
         </div>
         
-        <div class="action-toolbar">
-            <button class="action-btn" onclick="toggleDarkMode()" title="الوضع الليلي"><i class="fas fa-moon" id="darkModeIcon"></i></button>
-            <button class="action-btn" onclick="takeScreenshot()" title="لقطة شاشة"><i class="fas fa-camera text-success"></i></button>
-            <button class="action-btn" onclick="openWaCopyModal()" title="نسخ للواتساب"><i class="fas fa-copy" style="color:#00a896"></i></button>
-            <button class="action-btn" onclick="openInfoOverlay()" title="تفاصيل المرضى"><i class="fas fa-id-card text-info"></i></button>
-            <button class="action-btn" onclick="openAzModal()" title="ترتيب أبجدي"><i class="fas fa-sort-alpha-down text-primary"></i></button>
-            <button class="action-btn" onclick="openSupplyModal()" title="تجهيز الطلبية"><i class="fas fa-box-open text-warning"></i></button>
-            <button id="vaccineFilterBtn" class="action-btn position-relative" onclick="openVaccineModal()" title="الموقف اللقاحي">
-                <i id="vaccineIcon" class="fas fa-syringe" style="color: #0d6efd;"></i>
-                <!-- عداد إشعارات اللقاحات -->
-                <span id="vaccineBadge" class="position-absolute badge rounded-pill bg-danger" 
-                      style="display:none; font-size: 0.62rem; padding: 2px 4px; top: -5px; right: -5px; min-width: 16px; height: 16px; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; z-index: 10;">
-                    0
-                </span>
-            </button>
-            
-            <!-- زر تعديل الجدول المربع الجديد باللمعة الداخلية تم نقله ليصبح بجانب الأزرار -->
-            <!-- زر مراقب فلاتر الأجهزة الجديد (مطابق لبقية الأزرار) -->
-            <button id="machineFilterBtn" class="action-btn position-relative" onclick="openMachineModal()" title="تبديل فلاتر الأجهزة">
-                <i id="machineIcon" class="fas fa-tools" style="color: #9c27b0;"></i>
-                <!-- عداد إشعارات دقيق الموضع -->
-                <span id="machineBadge" class="position-absolute badge rounded-pill bg-danger" 
-                      style="display:none; font-size: 0.62rem; padding: 2px 4px; top: -5px; right: -5px; min-width: 16px; height: 16px; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; z-index: 10;">
-                    0
-                </span>
-            </button>
+        <div class="action-toolbar d-flex flex-column gap-2 align-items-center">
+            <div class="d-flex justify-content-center gap-1 w-100">
+                <button class="action-btn" onclick="toggleDarkMode()" title="الوضع الليلي"><i class="fas fa-moon" id="darkModeIcon"></i></button>
+                <button class="action-btn" onclick="takeScreenshot()" title="لقطة شاشة"><i class="fas fa-camera text-success"></i></button>
+                <button class="action-btn" onclick="openWaCopyModal()" title="نسخ للواتساب"><i class="fas fa-copy" style="color:#00a896"></i></button>
+                <button class="action-btn" onclick="openInfoOverlay()" title="تفاصيل المرضى"><i class="fas fa-id-card text-info"></i></button>
+                <button class="action-btn" onclick="openAzModal()" title="ترتيب أبجدي"><i class="fas fa-sort-alpha-down text-primary"></i></button>
+            </div>
+            <div class="d-flex justify-content-center gap-1 w-100">
+                <button class="action-btn" onclick="openSupplyModal()" title="تجهيز الطلبية"><i class="fas fa-box-open text-warning"></i></button>
+                <button id="vaccineFilterBtn" class="action-btn position-relative" onclick="openVaccineModal()" title="الموقف اللقاحي">
+                    <i id="vaccineIcon" class="fas fa-syringe" style="color: #0d6efd;"></i>
+                    <span id="vaccineBadge" class="position-absolute badge rounded-pill bg-danger" 
+                          style="display:none; font-size: 0.62rem; padding: 2px 4px; top: -5px; right: -5px; min-width: 16px; height: 16px; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                        0
+                    </span>
+                </button>
+                <button id="machineFilterBtn" class="action-btn position-relative" onclick="openMachineModal()" title="تبديل فلاتر الأجهزة">
+                    <i id="machineIcon" class="fas fa-tools" style="color: #9c27b0;"></i>
+                    <span id="machineBadge" class="position-absolute badge rounded-pill bg-danger" 
+                          style="display:none; font-size: 0.62rem; padding: 2px 4px; top: -5px; right: -5px; min-width: 16px; height: 16px; border: 1.5px solid white; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                        0
+                    </span>
+                </button>
+                <button id="pharmacyBtn" class="action-btn" onclick="accessPharmacyModal()" title="الصيدلية والتجهيز والاحتياج">
+                    <i class="fas fa-pills" style="color: #e65100;"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1216,9 +1218,14 @@
 <div class="modal fade" id="vaccineModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
         <div class="modal-content" style="border-radius:15px;">
-            <div class="modal-header bg-danger text-white py-2">
+            <div class="modal-header bg-danger text-white py-2 d-flex justify-content-between align-items-center">
                 <h6 class="modal-title fw-bold mb-0"><i class="fas fa-syringe ms-1"></i> الموقف اللقاحي للمرضى</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-light text-danger fw-bold py-0 px-2 admin-only" onclick="exportVaccineReportImage()" style="display:none; font-size:0.75rem;" title="تصدير تقرير A4">
+                        <i class="fas fa-file-image me-1"></i> تصدير
+                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
             </div>
             <div class="modal-body p-2">
                 <select id="vaccineFilterSelect" class="form-select form-select-sm fw-bold mb-2 text-center" onchange="onVaccineFilterChange(this.value)">
@@ -1703,6 +1710,90 @@
     </div>
 </div>
 
+<!-- نافذة الصيدلية والتجهيز الشهري -->
+<div class="modal fade" id="pharmacyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:15px;">
+            <div class="modal-header text-white py-2" style="background-color: #e65100;">
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-pills ms-1"></i> الصيدلية والتجهيز والاحتياج</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2">
+                <div class="d-flex justify-content-between align-items-center mb-2 gap-1 flex-wrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" id="pharmPeriodWeekly" class="btn btn-outline-warning fw-bold" onclick="setPharmacyPeriod('weekly')">أسبوع</button>
+                        <button type="button" id="pharmPeriodMonthly" class="btn btn-outline-warning fw-bold active" onclick="setPharmacyPeriod('monthly')">شهر</button>
+                        <button type="button" id="pharmPeriodMonthWeek" class="btn btn-outline-warning fw-bold" onclick="setPharmacyPeriod('monthWeek')">شهر + أسبوع</button>
+                    </div>
+                    <div class="d-flex gap-1 flex-wrap">
+                        <button class="btn btn-sm btn-outline-dark fw-bold" onclick="requestPharmacyAdminAccess()" title="إدارة المواد والقواعد">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="openPharmExportModal()" title="تصدير الاحتياج كصورة A4">
+                            <i class="fas fa-file-image me-1"></i> تصدير
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger fw-bold" onclick="resetPharmacyStockUI()" title="تصفير أعداد الموجود والعدد النهائي">
+                            <i class="fas fa-undo me-1"></i> تصفير
+                        </button>
+                        <button class="btn btn-sm btn-success fw-bold" onclick="savePharmacyStock()" title="حفظ أعداد المخزون والعدد النهائي">
+                            <i class="fas fa-save me-1"></i> حفظ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- لوحة إدارة وإضافة وتعديل المواد للإدارة -->
+                <div id="pharmacyManagePanel" class="card p-2 mb-2 bg-light border shadow-sm" style="display:none; font-size:0.8rem;">
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">
+                        <b class="text-primary"><i class="fas fa-plus-circle me-1"></i> إضافة / تعديل مادة وقاعدتها</b>
+                        <button type="button" class="btn-close btn-sm" onclick="togglePharmacyManagePanel()"></button>
+                    </div>
+                    <form id="pharmItemForm" onsubmit="submitPharmItemForm(event)">
+                        <input type="hidden" id="pharmItemEditIdx" value="-1">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-5">
+                                <label class="fw-bold text-muted mb-1">اسم المادة:</label>
+                                <input type="text" id="pharmItemName" class="form-control form-control-sm fw-bold" placeholder="مثال: Syring 5cc" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="fw-bold text-muted mb-1">سعة الكارتون:</label>
+                                <input type="number" id="pharmItemBox" class="form-control form-control-sm fw-bold" min="1" value="100" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="fw-bold text-muted mb-1">طريقة الحساب:</label>
+                                <select id="pharmItemRuleType" class="form-select form-select-sm fw-bold" onchange="onPharmRuleTypeChange(this.value)">
+                                    <option value="total_sessions">تعتمد على إجمالي الغسلات</option>
+                                    <option value="filter_sessions">تعتمد على فلتر محدد</option>
+                                    <option value="fixed_weekly">كمية أسبوعية ثابتة</option>
+                                    <option value="fixed_monthly">كمية شهرية ثابتة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6" id="pharmFilterSelectWrap" style="display:none;">
+                                <label class="fw-bold text-muted mb-1">اختر الفلتر:</label>
+                                <select id="pharmItemFilterSelect" class="form-select form-select-sm fw-bold"></select>
+                            </div>
+                            <div class="col-md-6" id="pharmValueInputWrap">
+                                <label class="fw-bold text-muted mb-1" id="pharmValueInputLabel">المعامل لكل غسلة (مثلاً 1 أو 3 أو 0.25):</label>
+                                <input type="number" step="any" id="pharmItemValue" class="form-control form-control-sm fw-bold" value="1" required>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" id="savePharmItemBtn" class="btn btn-sm btn-primary flex-fill fw-bold">حفظ المادة والقاعدة</button>
+                            <button type="button" id="deletePharmItemBtn" class="btn btn-sm btn-outline-danger fw-bold" style="display:none;" onclick="deleteCurrentPharmItem()">حذف المادة</button>
+                            <button type="button" class="btn btn-sm btn-secondary fw-bold" onclick="resetPharmItemForm()">إلغاء</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="pharmacyTableArea" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center text-muted small py-3">جاري احتساب الاحتياج والتقدير...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="adminModePill" class="admin-mode-pill" aria-live="polite" title="وضع الإدارة">
     <span class="admin-mode-pill-shine" aria-hidden="true"></span>
     <i class="fas fa-user-shield"></i>
@@ -1825,6 +1916,92 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تصدير جدول الاحتياج كصورة احترافية A4 -->
+<div class="modal fade" id="pharmExportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius:15px;">
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-file-image me-1"></i> تصدير الاحتياج كصورة</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted mb-1">عنوان التقرير / الشهر (اختياري):</label>
+                    <input type="text" id="pharmExportTitle" class="form-control form-control-sm fw-bold" placeholder="مثال: احتياج الشهر الثالث" autocomplete="off">
+                </div>
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted mb-1">الملاحظات (ستظهر أسفل الجدول):</label>
+                    <div id="pharmExportNotesContainer"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100 fw-bold mt-2" onclick="addPharmExportNoteInput()">
+                        <i class="fas fa-plus me-1"></i> إضافة ملاحظة أخرى
+                    </button>
+                </div>
+                <button type="button" class="btn btn-success w-100 fw-bold shadow-sm mt-3" onclick="generatePharmExportImage()">
+                    <i class="fas fa-download me-1"></i> تحميل الصورة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- كرت تصدير تقرير اللقاحات A4 (مخفي للرسم) -->
+<div id="vaccineExportCardWrap" style="position:fixed; left:-9999px; top:-9999px; pointer-events:none;">
+    <div id="vaccineExportCard" style="width:794px; min-height:1123px; background:#ffffff; color:#1e293b; font-family:'Tajawal', sans-serif; padding:30px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; border: 2px solid #dc3545;">
+        <div>
+            <div style="background:linear-gradient(135deg, #b71c1c 0%, #dc3545 100%); color:#ffffff; padding:14px 20px; border-radius:14px; text-align:center; margin-bottom:16px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                <div style="font-size:1.4rem; font-weight:800;">تقرير الموقف اللقاحي لمرضى غسيل الكلى (HBV)</div>
+            </div>
+            <table style="width:100%; border-collapse:collapse; text-align:center; table-layout:fixed;" id="vaccineExportTable">
+                <thead>
+                    <tr style="background:#f8d7da; color:#721c24; border-bottom:2px solid #f5c6cb; font-size:0.8rem; font-weight:800;">
+                        <th style="width:6%; padding:6px; border:1px solid #cbd5e1;">ت</th>
+                        <th style="width:28%; padding:6px; border:1px solid #cbd5e1;">الاسم</th>
+                        <th style="width:16%; padding:6px; border:1px solid #cbd5e1;">الحالة</th>
+                        <th style="width:12.5%; padding:6px; border:1px solid #cbd5e1;">الجرعة 1</th>
+                        <th style="width:12.5%; padding:6px; border:1px solid #cbd5e1;">الجرعة 2</th>
+                        <th style="width:12.5%; padding:6px; border:1px solid #cbd5e1;">الجرعة 3</th>
+                        <th style="width:12.5%; padding:6px; border:1px solid #cbd5e1;">الجرعة القادمة</th>
+                    </tr>
+                </thead>
+                <tbody id="vaccineExportTableBody"></tbody>
+            </table>
+        </div>
+        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-align:center; border-top:1px dashed #cbd5e1; padding-top:8px;">
+            وحدة غسيل الكلى — تاريخ التقرير: <span id="vaccineExportDate"></span>
+        </div>
+    </div>
+</div>
+
+<!-- كرت تصدير صورة الصيدلية A4 العمودية (مخفي للرسم) -->
+<div id="pharmExportCardWrap" style="position:fixed; left:-9999px; top:-9999px; pointer-events:none;">
+    <div id="pharmExportCard" style="width:794px; min-height:1123px; background:#ffffff; color:#1e293b; font-family:'Tajawal', sans-serif; padding:40px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+            <!-- الهيدر الرئيسي -->
+            <div id="pharmCardHeaderWrap" style="background:linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); color:#ffffff; padding:16px 24px; border-radius:16px; text-align:center; margin-bottom:24px; box-shadow:0 4px 12px rgba(0,0,0,0.1); display:none;">
+                <div id="pharmCardDynamicTitle" style="font-size:1.3rem; font-weight:800; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+            </div>
+
+            <!-- جدول المواد -->
+            <table style="width:100%; border-collapse:collapse; font-size:0.95rem; table-layout:fixed;">
+                <thead>
+                    <tr style="background:#f1f5f9; color:#0f172a; border-bottom:2px solid #cbd5e1;">
+                        <th style="width:10%; padding:10px; text-align:center; font-weight:800; border:1px solid #cbd5e1;">ت</th>
+                        <th style="width:65%; padding:10px; text-align:right; font-weight:800; border:1px solid #cbd5e1;">اسم المادة</th>
+                        <th style="width:25%; padding:10px; text-align:center; font-weight:800; border:1px solid #cbd5e1;">العدد</th>
+                    </tr>
+                </thead>
+                <tbody id="pharmCardTableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- الملاحظات في الأسفل -->
+        <div id="pharmCardNotesBlock" style="margin-top:30px; padding-top:16px; border-top:2px dashed #cbd5e1; display:none;">
+            <div style="font-size:1.05rem; font-weight:800; color:#0f172a; margin-bottom:8px;">الملاحظات:</div>
+            <div id="pharmCardNotesList" style="font-size:0.9rem; font-weight:700; color:#334155; display:flex; flex-direction:column; gap:6px;"></div>
         </div>
     </div>
 </div>
@@ -1960,6 +2137,7 @@
     window.onload = () => {
         initThemeFromStorage();
         initPwaSupport();
+        enableScreenWakeLock();
         prefillAdminPasswordInputs();
         initTimerSelects();
         
@@ -2503,13 +2681,13 @@ function openAdminStatsModal() {
             res.stats.forEach(s => {
                 const dayName = getDayNameFromDateStr(s.date);
                 monthTotalSum += Number(s.total) || 0;
-                html += `<tr class="clickable" onclick="openEditDayStatsModal('${escapeHtml(s.date)}', ${s.male}, ${s.female})"><td>${escapeHtml(s.date)}</td><td class="text-muted fw-bold">${dayName}</td><td>${toArabicDigits(s.male)}</td><td>${toArabicDigits(s.female)}</td><td class="fw-bold text-primary">${toArabicDigits(s.total)}</td></tr>`;
+                html += `<tr class="clickable" onclick="openEditDayStatsModal('${escapeHtml(s.date)}', ${s.male}, ${s.female})"><td>${escapeHtml(s.date)}</td><td class="text-muted fw-bold">${dayName}</td><td>${s.male || 0}</td><td>${s.female || 0}</td><td class="fw-bold text-primary">${s.total || 0}</td></tr>`;
             });
             html += '</tbody></table>';
             area.innerHTML = html;
 
             if (totalBanner) {
-                document.getElementById('monthlyTotalSumVal').innerText = toArabicDigits(monthTotalSum);
+                document.getElementById('monthlyTotalSumVal').innerText = monthTotalSum;
                 totalBanner.style.display = 'block';
             }
         }).withFailureHandler(err => {
@@ -2534,7 +2712,7 @@ function openAdminStatsModal() {
     function updateEditDayTotalSum() {
         const m = parseInt(document.getElementById('editDayMaleInput').value, 10) || 0;
         const f = parseInt(document.getElementById('editDayFemaleInput').value, 10) || 0;
-        document.getElementById('editDayTotalSum').innerText = toArabicDigits(m + f);
+        document.getElementById('editDayTotalSum').innerText = (m + f);
     }
 
     function saveDayStatsEdit() {
@@ -2589,9 +2767,9 @@ function openAdminStatsModal() {
 
         google.script.run.withSuccessHandler(res => {
             if (res && res.success) {
-                const maleStr = toArabicDigits(res.male);
-                const femaleStr = toArabicDigits(res.female);
-                const totalStr = toArabicDigits(res.total);
+                const maleStr = res.male || 0;
+                const femaleStr = res.female || 0;
+                const totalStr = res.total || 0;
 
                 document.getElementById('rangeMaleVal').innerText = maleStr;
                 document.getElementById('rangeFemaleVal').innerText = femaleStr;
@@ -3834,6 +4012,24 @@ function updateFormHbvNextDate() {
             screen.orientation.unlock();
         }
     }
+
+    let appWakeLock = null;
+    async function enableScreenWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                appWakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (err) { /* تجاهل القيود */ }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            enableScreenWakeLock();
+        }
+    });
+    document.addEventListener('click', () => {
+        if (!appWakeLock) enableScreenWakeLock();
+    }, { once: true });
 
     function renderStickyDaysHeader() {
         let html = '<table class="view-grid-table schedule-days-header"><thead><tr>';
@@ -5345,7 +5541,117 @@ function updateFormHbvNextDate() {
 
     let currentVaccineFilter = 'all';
 
-    function openVaccineModal() {
+    function exportVaccineReportImage() {
+    if (!dataStore || !dataStore.patientsDetailedInfo || !dataStore.patientsDetailedInfo.length) {
+        return alert("لا توجد بيانات مرضى للتصدير");
+    }
+
+    const tbody = document.getElementById('vaccineExportTableBody');
+    const exportDateEl = document.getElementById('vaccineExportDate');
+    if (!tbody) return;
+
+    const filter = currentVaccineFilter || 'all';
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
+    const filteredPatients = [];
+    dataStore.patientsDetailedInfo.forEach(p => {
+        const vInfo = getVaccineStatusInfo(p);
+        let isDueSoon = false;
+        let hasUpcoming = false;
+        let diffDays = 9999;
+
+        if (vInfo.nextDateStr && vInfo.nextDateStr !== "---") {
+            const nextDoseDate = new Date(vInfo.nextDateStr.replace(/\//g, '-'));
+            diffDays = Math.ceil((nextDoseDate - now) / (1000 * 60 * 60 * 24));
+            hasUpcoming = true;
+            if (diffDays <= 10) isDueSoon = true;
+        }
+
+        let include = false;
+        if (filter === 'upcoming') include = hasUpcoming;
+        else if (filter === 'due') include = isDueSoon;
+        else if (filter === 'all') include = true;
+        else include = (vInfo.statusKey === filter);
+
+        if (include) {
+            filteredPatients.push({ p, vInfo, diffDays });
+        }
+    });
+
+    if (!filteredPatients.length) {
+        return alert("لا يوجد مرضى مطبق عليهم الفلتر الحالي لتصديرهم");
+    }
+
+    filteredPatients.sort((a, b) => (a.p["اسم المريض"] || "").localeCompare((b.p["اسم المريض"] || ""), 'ar'));
+
+    const count = filteredPatients.length;
+
+    // ضبط حجم الخط والمسافات ديناميكياً ليتسع أي عدد مرضى (حتى 100 مريض) في ورقة A4 واحدة
+    let fontSize = "0.75rem";
+    let cellPadding = "5px 3px";
+    if (count > 70) {
+        fontSize = "0.42rem";
+        cellPadding = "1px 1px";
+    } else if (count > 50) {
+        fontSize = "0.48rem";
+        cellPadding = "1px 1px";
+    } else if (count > 35) {
+        fontSize = "0.55rem";
+        cellPadding = "2px 1px";
+    } else if (count > 25) {
+        fontSize = "0.62rem";
+        cellPadding = "3px 2px";
+    } else if (count > 15) {
+        fontSize = "0.7rem";
+        cellPadding = "4px 2px";
+    }
+
+    let rowsHtml = '';
+    filteredPatients.forEach((item, i) => {
+        const p = item.p;
+        const vi = item.vInfo;
+        const name = p["اسم المريض"] || "---";
+        const status = vi.statusText;
+        const h1 = p["HBV1"] ? formatDateToArabicDDMMYYYY(p["HBV1"]) : "---";
+        const h2 = p["HBV2"] ? formatDateToArabicDDMMYYYY(p["HBV2"]) : "---";
+        const h3 = p["HBV3"] ? formatDateToArabicDDMMYYYY(p["HBV3"]) : "---";
+        const nextDate = (vi.nextDateStr && vi.nextDateStr !== "---") ? formatDateToArabicDDMMYYYY(vi.nextDateStr) : "---";
+
+        const bgRow = (i % 2 === 0) ? "#e8edf3" : "#ffffff";
+
+        rowsHtml += `
+            <tr style="background:${bgRow}; border-bottom:1px solid #e2e8f0; font-size:${fontSize};">
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:700;">${i + 1}</td>
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:800; text-align:right; padding-right:6px;">${escapeHtml(name)}</td>
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:800;">${escapeHtml(status)}</td>
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:800;">${h1}</td>
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:800;">${h2}</td>
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:800;">${h3}</td>
+                <td style="padding:${cellPadding}; border:1px solid #cbd5e1; font-weight:800; color:#dc3545;">${nextDate}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = rowsHtml;
+    if (exportDateEl) exportDateEl.textContent = new Date().toLocaleDateString('ar-IQ');
+
+    const card = document.getElementById('vaccineExportCard');
+    html2canvas(card, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `تقرير_الموقف_اللقاحي_${new Date().toLocaleDateString()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        alert("تعذر تصدير الصورة: " + err.message);
+    });
+}
+
+function openVaccineModal() {
         if (!dataStore || !dataStore.patientsDetailedInfo) {
             alert("البيانات غير محملة بعد");
             return;
@@ -5544,6 +5850,28 @@ function updateFormHbvNextDate() {
                     clonedTarget.style.width = '1250px';
                     clonedTarget.style.minWidth = '1250px';
                     clonedTarget.style.maxWidth = '1250px';
+                }
+
+                // إدراج هيدر أسماء الأيام في أعلى الجدول المصور تلقائياً
+                const clonedHeader = clonedDoc.getElementById('scheduleDaysHeader');
+                if (clonedHeader && clonedTarget) {
+                    const headerCopy = clonedHeader.cloneNode(true);
+                    headerCopy.style.display = 'block';
+                    headerCopy.style.position = 'static';
+                    headerCopy.style.width = '1250px';
+                    headerCopy.style.marginBottom = '6px';
+                    clonedTarget.insertBefore(headerCopy, clonedTarget.firstChild);
+
+                    const headerCells = headerCopy.querySelectorAll('th');
+                    headerCells.forEach(cell => {
+                        cell.style.verticalAlign = 'middle';
+                        cell.style.padding = '8px 4px';
+                        cell.style.fontSize = '13px';
+                        cell.style.fontWeight = 'bold';
+                        cell.style.background = '#f4a460';
+                        cell.style.color = '#000000';
+                        cell.style.border = '1px solid #bbb';
+                    });
                 }
 
                 const sections = clonedDoc.querySelectorAll('.shift-section');
@@ -6807,6 +7135,558 @@ function updateVaccineNotificationBadge() {
         badge.style.display = 'none';
         icon.style.color = '#0d6efd'; // يرجع للأزرق الافتراضي
     }
+}
+
+// ==========================================
+// نظام الصيدلية والتجهيز والاحتياج التلقائي المرن
+// ==========================================
+let currentPharmPeriod = 'monthly';
+let pharmacyStockMap = {};
+let pharmacyFinalMap = {};
+let pharmacyItemsList = [];
+let isPharmAdminAuth = false;
+let pharmExportNotesList = [];
+
+function requestPharmacyAdminAccess() {
+  if (isPharmAdminAuth) {
+    togglePharmacyManagePanel();
+    return;
+  }
+  const pwd = prompt("الرجاء ادخال الرمز الخاص:");
+  if (!pwd) return;
+  
+  google.script.run.withSuccessHandler(res => {
+    if (res && res.success && res.authenticated) {
+      isPharmAdminAuth = true;
+      scheduleEditorPassword = pwd;
+      renderPharmacyTable();
+      togglePharmacyManagePanel();
+    } else {
+      alert("❌ الرمز السري غير صحيح!");
+    }
+  }).verifyCopyKey(pwd);
+}
+
+function calculateSessionsStatsDynamic() {
+  let stats = { total: 0, byFilter: {} };
+  if (!dataStore || !dataStore.patientsDetailedInfo) return stats;
+  
+  dataStore.patientsDetailedInfo.forEach(p => {
+    let sess = parseInt(p["عدد الغسلات الأسبوعي"], 10);
+    if (isNaN(sess) || sess < 0) sess = 0;
+    let filter = (p["الفلتر"] || p["Filter"] || "").toString().trim().toUpperCase();
+    
+    stats.total += sess;
+    if (filter) {
+      if (!stats.byFilter[filter]) stats.byFilter[filter] = 0;
+      stats.byFilter[filter] += sess;
+      
+      ["100X", "80X", "60X", "40X", "BICART", "SRB"].forEach(key => {
+        if (filter.includes(key)) {
+          if (!stats.byFilter[key]) stats.byFilter[key] = 0;
+          stats.byFilter[key] += sess;
+        }
+      });
+    }
+  });
+  return stats;
+}
+
+function calculateWeeklyEstForItem(item, stats) {
+  if (item.ruleType === 'total_sessions') {
+    return stats.total * (parseFloat(item.mult) || 0);
+  } else if (item.ruleType === 'filter_sessions') {
+    let fKey = (item.filterName || "").toUpperCase();
+    let sess = stats.byFilter[fKey] || 0;
+    return sess * (parseFloat(item.mult) || 0);
+  } else if (item.ruleType === 'fixed_weekly') {
+    return parseFloat(item.fixedVal) || 0;
+  } else if (item.ruleType === 'fixed_monthly') {
+    return (parseFloat(item.fixedVal) || 0) / 4;
+  }
+  return 0;
+}
+
+function populatePharmFilterSelect() {
+  const sel = document.getElementById('pharmItemFilterSelect');
+  if (!sel) return;
+  
+  let filterSet = new Set();
+  if (dataStore && dataStore.fieldSuggestions && dataStore.fieldSuggestions.filter) {
+    dataStore.fieldSuggestions.filter.forEach(f => {
+      if (f) filterSet.add(f.toString().trim().toUpperCase());
+    });
+  }
+  if (dataStore && dataStore.patientsDetailedInfo) {
+    dataStore.patientsDetailedInfo.forEach(p => {
+      let f = (p["الفلتر"] || p["Filter"] || "").toString().trim().toUpperCase();
+      if (f) filterSet.add(f);
+    });
+  }
+  
+  if (!filterSet.size) {
+    ["100X", "80X", "60X", "40X"].forEach(f => filterSet.add(f));
+  }
+  
+  sel.innerHTML = Array.from(filterSet).map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+}
+
+function onPharmRuleTypeChange(val) {
+  const filterWrap = document.getElementById('pharmFilterSelectWrap');
+  const valWrap = document.getElementById('pharmValueInputWrap');
+  const label = document.getElementById('pharmValueInputLabel');
+  
+  if (val === 'total_sessions') {
+    filterWrap.style.display = 'none';
+    valWrap.style.display = 'block';
+    label.innerText = 'المعامل لكل غسلة (مثلاً 1 أو 3 أو 0.25):';
+  } else if (val === 'filter_sessions') {
+    filterWrap.style.display = 'block';
+    valWrap.style.display = 'block';
+    label.innerText = 'المعامل لكل غسلة لهذا الفلتر:';
+    populatePharmFilterSelect();
+  } else if (val === 'fixed_weekly') {
+    filterWrap.style.display = 'none';
+    valWrap.style.display = 'block';
+    label.innerText = 'الكمية الثابتة المطلوبة أسبوعياً:';
+  } else if (val === 'fixed_monthly') {
+    filterWrap.style.display = 'none';
+    valWrap.style.display = 'block';
+    label.innerText = 'الكمية الثابتة المطلوبة شهرياً:';
+  }
+}
+
+function togglePharmacyManagePanel() {
+  const panel = document.getElementById('pharmacyManagePanel');
+  if (!panel) return;
+  let isVisible = panel.style.display !== 'none';
+  panel.style.display = isVisible ? 'none' : 'block';
+  if (!isVisible) {
+    resetPharmItemForm();
+    populatePharmFilterSelect();
+  }
+}
+
+function resetPharmItemForm() {
+  document.getElementById('pharmItemForm').reset();
+  document.getElementById('pharmItemEditIdx').value = "-1";
+  document.getElementById('savePharmItemBtn').innerText = "حفظ المادة والقاعدة";
+  document.getElementById('deletePharmItemBtn').style.display = "none";
+  onPharmRuleTypeChange('total_sessions');
+}
+
+function handlePharmItemClick(idx) {
+  if (isPharmAdminAuth) {
+    editPharmItem(idx);
+  }
+}
+
+function editPharmItem(idx) {
+  const item = pharmacyItemsList[idx];
+  if (!item) return;
+  
+  document.getElementById('pharmacyManagePanel').style.display = 'block';
+  document.getElementById('pharmItemEditIdx').value = idx;
+  document.getElementById('pharmItemName').value = item.name || '';
+  document.getElementById('pharmItemBox').value = item.box || 1;
+  document.getElementById('pharmItemRuleType').value = item.ruleType || 'total_sessions';
+  
+  onPharmRuleTypeChange(item.ruleType || 'total_sessions');
+  if (item.filterName) {
+    document.getElementById('pharmItemFilterSelect').value = item.filterName.toUpperCase();
+  }
+  
+  if (item.ruleType === 'fixed_weekly' || item.ruleType === 'fixed_monthly') {
+    document.getElementById('pharmItemValue').value = item.fixedVal || 0;
+  } else {
+    document.getElementById('pharmItemValue').value = item.mult || 1;
+  }
+  
+  document.getElementById('savePharmItemBtn').innerText = "تحديث بيانات المادة";
+  document.getElementById('deletePharmItemBtn').style.display = "inline-block";
+  document.getElementById('pharmacyManagePanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function deleteCurrentPharmItem() {
+  const idx = parseInt(document.getElementById('pharmItemEditIdx').value, 10);
+  if (idx >= 0 && idx < pharmacyItemsList.length) {
+    deletePharmItem(idx);
+  }
+}
+
+function deletePharmItem(idx) {
+  const item = pharmacyItemsList[idx];
+  if (!item) return;
+  if (!confirm(`هل أنت متأكد من حذف المادة (${item.name}) نهائياً؟`)) return;
+  
+  const pwd = scheduleEditorPassword;
+  if (!pwd) return alert("الرجاء إدخال رمز الإدارة أولاً");
+  
+  google.script.run.withSuccessHandler(res => {
+    if (res && res.success) {
+      pharmacyItemsList.splice(idx, 1);
+      resetPharmItemForm();
+      document.getElementById('pharmacyManagePanel').style.display = 'none';
+      renderPharmacyTable();
+    } else {
+      alert("❌ فشل الحذف: " + (res ? res.error : ""));
+    }
+  }).deleteSinglePharmacyItemServer(pwd, item.name);
+}
+
+function submitPharmItemForm(e) {
+  e.preventDefault();
+  const pwd = scheduleEditorPassword;
+  if (!pwd) return alert("الرجاء إدخال رمز الإدارة أولاً");
+  
+  const idx = parseInt(document.getElementById('pharmItemEditIdx').value, 10);
+  const ruleType = document.getElementById('pharmItemRuleType').value;
+  const val = parseFloat(document.getElementById('pharmItemValue').value) || 0;
+  
+  let originalName = "";
+  if (idx >= 0 && idx < pharmacyItemsList.length) {
+    originalName = pharmacyItemsList[idx].name;
+  }
+  
+  const itemObj = {
+    name: document.getElementById('pharmItemName').value.trim(),
+    box: parseInt(document.getElementById('pharmItemBox').value, 10) || 1,
+    ruleType: ruleType
+  };
+  
+  if (ruleType === 'filter_sessions') {
+    itemObj.filterName = document.getElementById('pharmItemFilterSelect').value;
+    itemObj.mult = val;
+  } else if (ruleType === 'total_sessions') {
+    itemObj.mult = val;
+  } else {
+    itemObj.fixedVal = val;
+  }
+  
+  const btn = document.getElementById('savePharmItemBtn');
+  btn.disabled = true;
+  btn.innerText = "جاري الحفظ والرفع...";
+
+  google.script.run.withSuccessHandler(res => {
+    btn.disabled = false;
+    btn.innerText = idx >= 0 ? "تحديث بيانات المادة" : "حفظ المادة والقاعدة";
+    if (res && res.success) {
+      if (idx >= 0 && idx < pharmacyItemsList.length) {
+        pharmacyItemsList[idx] = itemObj;
+      } else {
+        pharmacyItemsList.push(itemObj);
+      }
+      resetPharmItemForm();
+      document.getElementById('pharmacyManagePanel').style.display = 'none';
+      renderPharmacyTable();
+    } else {
+      alert("❌ فشل الحفظ: " + (res ? res.error : ""));
+    }
+  }).withFailureHandler(err => {
+    btn.disabled = false;
+    btn.innerText = idx >= 0 ? "تحديث بيانات المادة" : "حفظ المادة والقاعدة";
+    alert("❌ خطأ: " + err.message);
+  }).saveSinglePharmacyItemServer(pwd, itemObj, originalName);
+}
+
+function setPharmacyPeriod(period) {
+  currentPharmPeriod = period;
+  ['Weekly', 'Monthly', 'MonthWeek'].forEach(p => {
+    let btn = document.getElementById('pharmPeriod' + p);
+    if (btn) btn.classList.toggle('active', p.toLowerCase() === period.toLowerCase());
+  });
+  renderPharmacyTable();
+}
+
+function accessPharmacyModal() {
+  if (isAdminAuthenticated || window.isPharmacyUnlocked) {
+    openPharmacyModal();
+    return;
+  }
+  const pwd = prompt("الرجاء إدخال الرمز السري للدخول إلى الصيدلية:");
+  if (!pwd) return;
+  
+  google.script.run.withSuccessHandler(res => {
+    if (res && res.success && res.authenticated) {
+      window.isPharmacyUnlocked = true;
+      openPharmacyModal();
+    } else {
+      alert("❌ الرمز السري للصيدلية غير صحيح!");
+    }
+  }).verifyPharmacyKey(pwd);
+}
+
+function openPharmacyModal() {
+  const el = document.getElementById('pharmacyModal');
+  let mdl = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+  mdl.show();
+  
+  google.script.run.withSuccessHandler(res => {
+    if (res && res.success) {
+      pharmacyStockMap = res.stock || {};
+      pharmacyFinalMap = res.finalMap || {};
+      pharmacyItemsList = res.items || [];
+    } else {
+      pharmacyItemsList = [];
+    }
+    renderPharmacyTable();
+  }).withFailureHandler(() => {
+    pharmacyItemsList = [];
+    renderPharmacyTable();
+  }).getPharmacyData();
+}
+
+function updateRowRequirement(idx, stockVal, totalEst, boxSize) {
+  let stock = parseInt(stockVal, 10) || 0;
+  let itemName = pharmacyItemsList[idx] ? pharmacyItemsList[idx].name : '';
+  if (itemName) pharmacyStockMap[itemName] = stock;
+  
+  let needUnit = Math.max(0, totalEst - stock);
+  let needBox = needUnit > 0 ? (needUnit / boxSize).toFixed(2) : 0;
+  
+  let needUnitEl = document.getElementById('needUnit_' + idx);
+  let needBoxEl = document.getElementById('needBox_' + idx);
+  
+  if (needUnitEl) {
+    needUnitEl.innerText = needUnit;
+    needUnitEl.className = needUnit > 0 ? "text-danger fw-bold" : "text-success fw-bold";
+  }
+  if (needBoxEl) {
+    needBoxEl.innerHTML = `<div>${needBox}</div><div style="font-size:0.62rem; color:#6c757d; font-weight:normal; margin-top:1px;">(${boxSize}/ك)</div>`;
+    needBoxEl.className = needUnit > 0 ? "text-danger fw-bold" : "text-success fw-bold";
+  }
+}
+
+function movePharmItem(idx, direction) {
+  let targetIdx = idx + direction;
+  if (targetIdx < 0 || targetIdx >= pharmacyItemsList.length) return;
+  let temp = pharmacyItemsList[idx];
+  pharmacyItemsList[idx] = pharmacyItemsList[targetIdx];
+  pharmacyItemsList[targetIdx] = temp;
+  renderPharmacyTable();
+}
+
+function renderPharmacyTable() {
+  const area = document.getElementById('pharmacyTableArea');
+  if (!area) return;
+  
+  if (!pharmacyItemsList || !pharmacyItemsList.length) {
+    area.innerHTML = `<div class="text-center text-muted small py-4">
+      <i class="fas fa-info-circle d-block mb-2 text-warning fs-4"></i>
+      لا توجد مواد مضافة في ورقة 'التجهيز' بملف الشيت.<br>
+      اضغط على زر <b>إدارة</b> بالأعلى لإضافة مادة جديدة وقاعدتها.
+    </div>`;
+    return;
+  }
+  
+  const stats = calculateSessionsStatsDynamic();
+  let mult = 1;
+  let periodLabel = "أسبوع";
+  if (currentPharmPeriod === 'monthly') { mult = 4; periodLabel = "شهر"; }
+  else if (currentPharmPeriod === 'monthWeek') { mult = 5; periodLabel = "شهر + أسبوع"; }
+  
+  let html = `<table class="table table-sm table-bordered align-middle text-center mb-0" style="font-size:0.75rem;">
+    <thead class="table-dark">
+      <tr>
+        <th style="width:28%;">المادة</th>
+        <th style="width:12%;">الموجود</th>
+        <th style="width:14%;">التقدير (${periodLabel})</th>
+        <th style="width:14%;">الاحتياج (قطع)</th>
+        <th style="width:16%;">الاحتياج (كارتون)</th>
+        <th style="width:16%;">العدد النهائي</th>
+      </tr>
+    </thead>
+    <tbody>`;
+    
+  pharmacyItemsList.forEach((item, idx) => {
+    let weeklyEst = calculateWeeklyEstForItem(item, stats);
+    let totalEst = Math.ceil(weeklyEst * mult);
+    
+    let stockRaw = pharmacyStockMap[item.name];
+    let stock = parseInt(stockRaw, 10);
+    if (isNaN(stock)) stock = 0;
+    let stockInputValue = stock === 0 ? '' : stock;
+    
+    let needUnit = Math.max(0, totalEst - stock);
+    let needBox = needUnit > 0 ? (needUnit / item.box).toFixed(2) : 0;
+    let needClass = needUnit > 0 ? "text-danger fw-bold" : "text-success fw-bold";
+    
+    let finalRaw = pharmacyFinalMap[item.name];
+    let finalVal = (finalRaw !== undefined && finalRaw !== null) ? finalRaw : (item.finalQty !== undefined ? item.finalQty : 0);
+    let finalInputValue = (finalVal === 0 || finalVal === '0') ? '' : finalVal;
+
+    let nameClickAttr = isPharmAdminAuth ? `onclick="handlePharmItemClick(${idx})" style="cursor:pointer;" title="اضغط لتعديل المادة"` : '';
+    let nameColorClass = isPharmAdminAuth ? 'text-primary' : '';
+    
+    let orderButtons = isPharmAdminAuth ? `
+      <span class="d-inline-flex gap-1 me-1 align-items-center">
+        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="event.stopPropagation(); movePharmItem(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="تقديم"><i class="fas fa-arrow-up" style="font-size:0.6rem;"></i></button>
+        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="event.stopPropagation(); movePharmItem(${idx}, 1)" ${idx === pharmacyItemsList.length - 1 ? 'disabled' : ''} title="تأخير"><i class="fas fa-arrow-down" style="font-size:0.6rem;"></i></button>
+      </span>
+    ` : '';
+
+    html += `<tr>
+      <td class="fw-bold text-start ps-1">
+        ${orderButtons}
+        <span class="${nameColorClass}" ${nameClickAttr}>${escapeHtml(item.name)}</span>
+      </td>
+      <td>
+        <input type="number" class="form-control form-control-sm text-center fw-bold p-1" 
+               value="${stockInputValue}" placeholder="" min="0" 
+               oninput="updateRowRequirement(${idx}, this.value, ${totalEst}, ${item.box})">
+      </td>
+      <td class="fw-bold text-primary">${totalEst}</td>
+      <td id="needUnit_${idx}" class="${needClass}">${needUnit}</td>
+      <td id="needBox_${idx}" class="${needClass}">
+        <div>${needBox}</div>
+        <div style="font-size:0.62rem; color:#6c757d; font-weight:normal; margin-top:1px;">(${item.box}/ك)</div>
+      </td>
+      <td>
+        <input type="number" class="form-control form-control-sm text-center fw-bold p-1 text-success" 
+               value="${finalInputValue}" placeholder="" min="0" 
+               onchange="pharmacyFinalMap['${escapeHtml(item.name)}']=parseInt(this.value,10)||0;">
+      </td>
+    </tr>`;
+  });
+  
+  html += `</tbody></table>`;
+  area.innerHTML = html;
+}
+
+function resetPharmacyStockUI() {
+  if (!confirm("⚠️ هل أنت متأكد من تصفير أعداد الموجود والعدد النهائي لبدء جرد جديد؟")) return;
+  
+  pharmacyItemsList.forEach(item => {
+    pharmacyStockMap[item.name] = 0;
+    pharmacyFinalMap[item.name] = 0;
+  });
+  
+  renderPharmacyTable();
+  
+  if (confirm("هل تريد حفظ التصفير في الشيت الآن؟")) {
+    savePharmacyStock();
+  }
+}
+
+function savePharmacyStock() {
+  google.script.run.withSuccessHandler(res => {
+    if (res && res.success) {
+      alert("✅ تم حفظ أعداد المخزون والترتيب والعدد النهائي في ورقة 'التجهيز' بالشيت بنجاح!");
+    } else {
+      alert("❌ فشل الحفظ في الشيت: " + (res ? res.error : ""));
+    }
+  }).savePharmacyStockServer(pharmacyItemsList, pharmacyStockMap, pharmacyFinalMap);
+}
+
+// ==========================================
+// منطق تصدير الاحتياج والتقرير كصورة A4
+// ==========================================
+
+function openPharmExportModal() {
+  pharmExportNotesList = [];
+  document.getElementById('pharmExportTitle').value = "";
+  renderPharmExportNotesInputs();
+  
+  const el = document.getElementById('pharmExportModal');
+  let mdl = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+  mdl.show();
+}
+
+function renderPharmExportNotesInputs() {
+  const container = document.getElementById('pharmExportNotesContainer');
+  if (!container) return;
+  
+  let html = '';
+  pharmExportNotesList.forEach((note, idx) => {
+    html += `
+      <div class="d-flex gap-1 mb-1 align-items-center">
+        <span class="fw-bold small text-muted">•</span>
+        <input type="text" class="form-control form-control-sm fw-bold" value="${escapeHtml(note)}" 
+               oninput="pharmExportNotesList[${idx}]=this.value" placeholder="الملاحظة ${idx + 1}">
+        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removePharmExportNote(${idx})"><i class="fas fa-times"></i></button>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function addPharmExportNoteInput() {
+  pharmExportNotesList.push('');
+  renderPharmExportNotesInputs();
+}
+
+function removePharmExportNote(idx) {
+  pharmExportNotesList.splice(idx, 1);
+  renderPharmExportNotesInputs();
+}
+
+function generatePharmExportImage() {
+  const customTitle = document.getElementById('pharmExportTitle').value.trim();
+  const cardHeaderWrap = document.getElementById('pharmCardHeaderWrap');
+  const cardTitleEl = document.getElementById('pharmCardDynamicTitle');
+  const tableBody = document.getElementById('pharmCardTableBody');
+  const notesBlock = document.getElementById('pharmCardNotesBlock');
+  const notesListEl = document.getElementById('pharmCardNotesList');
+  
+  if (customTitle) {
+    cardTitleEl.innerText = customTitle;
+    if (cardHeaderWrap) cardHeaderWrap.style.display = 'block';
+  } else {
+    cardTitleEl.innerText = '';
+    if (cardHeaderWrap) cardHeaderWrap.style.display = 'none';
+  }
+  
+  let rowsHtml = '';
+  let validCount = 0;
+  
+  pharmacyItemsList.forEach(item => {
+    let finalRaw = pharmacyFinalMap[item.name];
+    let finalVal = (finalRaw !== undefined && finalRaw !== null) ? parseInt(finalRaw, 10) : (item.finalQty || 0);
+    
+    if (!isNaN(finalVal) && finalVal > 0) {
+      validCount++;
+      rowsHtml += `
+        <tr style="border-bottom:1px solid #e2e8f0; ${validCount % 2 === 0 ? 'background:#f8fafc;' : ''}">
+          <td style="padding:10px; text-align:center; font-weight:700; border:1px solid #e2e8f0;">${validCount}</td>
+          <td style="padding:10px; text-align:right; font-weight:800; border:1px solid #e2e8f0; direction:ltr; unicode-bidi:isolate;"><span style="float:right;">${escapeHtml(item.name)}</span></td>
+          <td style="padding:10px; text-align:center; font-weight:800; color:#0284c7; border:1px solid #e2e8f0; font-size:1.05rem;">${finalVal}</td>
+        </tr>
+      `;
+    }
+  });
+  
+  if (validCount === 0) {
+    alert("لا توجد أي مادة يحتوي 'العدد النهائي' فيها على قيمة أكبر من صفر!");
+    return;
+  }
+  
+  tableBody.innerHTML = rowsHtml;
+  
+  let validNotes = pharmExportNotesList.filter(n => n && n.trim());
+  if (validNotes.length > 0) {
+    notesListEl.innerHTML = validNotes.map(n => `<div>• ${escapeHtml(n.trim())}</div>`).join('');
+    notesBlock.style.display = 'block';
+  } else {
+    notesBlock.style.display = 'none';
+  }
+  
+  const card = document.getElementById('pharmExportCard');
+  
+  html2canvas(card, {
+    scale: 2.5,
+    useCORS: true,
+    backgroundColor: '#ffffff'
+  }).then(canvas => {
+    const link = document.createElement('a');
+    let fileName = customTitle ? `تقرير_احتياج_${customTitle}` : `تقرير_احتياج_الصيدلية`;
+    link.download = `${fileName}_${new Date().toLocaleDateString()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    bootstrap.Modal.getInstance(document.getElementById('pharmExportModal'))?.hide();
+  }).catch(err => {
+    alert("تعذر تصدير الصورة: " + err.message);
+  });
 }
 </script>
 </body>
