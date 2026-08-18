@@ -1015,9 +1015,9 @@
             <div class="d-flex justify-content-center gap-1 w-100">
                 <button class="action-btn" onclick="toggleDarkMode()" title="الوضع الليلي"><i class="fas fa-moon" id="darkModeIcon"></i></button>
                 <button class="action-btn" onclick="takeScreenshot()" title="لقطة شاشة"><i class="fas fa-camera text-success"></i></button>
-                <button class="action-btn" onclick="openWaCopyModal()" title="نسخ للواتساب"><i class="fas fa-copy" style="color:#00a896"></i></button>
                 <button class="action-btn" onclick="openInfoOverlay()" title="تفاصيل المرضى"><i class="fas fa-id-card text-info"></i></button>
                 <button class="action-btn" onclick="openAzModal()" title="ترتيب أبجدي"><i class="fas fa-sort-alpha-down text-primary"></i></button>
+                <button class="action-btn admin-only" onclick="openWaCopyModal()" title="تقرير الأيام والنسخ" style="display:none;"><i class="fas fa-copy" style="color:#00a896"></i></button>
             </div>
             <div class="d-flex justify-content-center gap-1 w-100">
                 <button class="action-btn" onclick="openSupplyModal()" title="تجهيز الطلبية"><i class="fas fa-box-open text-warning"></i></button>
@@ -1375,9 +1375,14 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary flex-fill fw-bold" onclick="waSetAllDays(false)">إلغاء الكل</button>
                 </div>
                 <div id="waCopyDaysBox"></div>
-                <button type="button" class="btn btn-success w-100 fw-bold shadow-sm mt-3" onclick="waExecuteCopy()">
-                    <i class="fas fa-copy me-1"></i> نسخ الأيام المحددة
-                </button>
+                <div class="d-flex flex-column gap-2 mt-3">
+                    <button type="button" class="btn btn-success w-100 fw-bold shadow-sm" onclick="waExecuteCopy()">
+                        <i class="fas fa-copy me-1"></i> نسخ النص للأيام المحددة
+                    </button>
+                    <button type="button" id="btnSendWaTelegram" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="waExecuteTelegramSend()">
+                        <i class="fab fa-telegram-plane me-1"></i> إرسال الأيام المحددة إلى تيليجرام
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -3549,6 +3554,40 @@ function updateFormHbvNextDate() {
         if (!report) return alert("لا توجد بيانات للنسخ");
         waCopyToClipboard(report);
         bootstrap.Modal.getInstance(document.getElementById('waCopyModal'))?.hide();
+    }
+
+    function waExecuteTelegramSend() {
+        if (!isAdminAuthenticated) return alert("الرجاء تسجيل الدخول كمسؤول أولاً.");
+        const selectedDays = waReadSelectedDays();
+        if (!selectedDays.length) return alert("اختر يوماً واحداً على الأقل لإرساله");
+        
+        const pwd = scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
+
+        const btn = document.getElementById('btnSendWaTelegram');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري إرسال الرسائل...';
+        }
+
+        google.script.run.withSuccessHandler(res => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fab fa-telegram-plane me-1"></i> إرسال الأيام المحددة إلى تيليجرام';
+            }
+            if (res && res.success) {
+                alert("✅ تم إرسال تقارير الأيام المحددة إلى تيليجرام بنجاح!");
+                bootstrap.Modal.getInstance(document.getElementById('waCopyModal'))?.hide();
+            } else {
+                alert("❌ فشل الإرسال: " + (res ? res.error : ""));
+            }
+        }).withFailureHandler(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fab fa-telegram-plane me-1"></i> إرسال الأيام المحددة إلى تيليجرام';
+            }
+            alert("❌ خطأ: " + err.message);
+        }).sendTelegramDayReportsServer(pwd, selectedDays);
     }
 
     // =============================================================
@@ -7182,7 +7221,7 @@ function calculateSessionsStatsDynamic() {
       stats.byFilter[filter] += sess;
       
       ["100X", "80X", "60X", "40X", "BICART", "SRB"].forEach(key => {
-        if (filter.includes(key)) {
+        if (key !== filter && filter.includes(key)) {
           if (!stats.byFilter[key]) stats.byFilter[key] = 0;
           stats.byFilter[key] += sess;
         }
