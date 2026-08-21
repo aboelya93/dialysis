@@ -1212,7 +1212,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="azModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h6>أبجدي</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0" id="azListArea"></div></div></div></div>
+<div class="modal fade" id="azModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable"><div class="modal-content"><div class="modal-header py-2 d-flex justify-content-between align-items-center"><div class="d-flex align-items-center gap-2"><button type="button" class="btn-close" data-bs-dismiss="modal"></button><button id="azToggleDayLockBtn" class="btn btn-sm py-0 px-2 fw-bold admin-only" onclick="toggleDayPickerLock()" style="display:none; font-size:0.72rem; border-radius:8px;"></button></div><h6 class="modal-title fw-bold mb-0">أبجدي</h6></div><div class="modal-body p-0" id="azListArea"></div></div></div></div>
 
 <!-- نافذة الموقف اللقاحي -->
 <div class="modal fade" id="vaccineModal" tabindex="-1">
@@ -1727,8 +1727,10 @@
                 <div class="d-flex justify-content-between align-items-center mb-2 gap-1 flex-wrap">
                     <div class="btn-group btn-group-sm" role="group">
                         <button type="button" id="pharmPeriodWeekly" class="btn btn-outline-warning fw-bold" onclick="setPharmacyPeriod('weekly')">أسبوع</button>
+                        <button type="button" id="pharmPeriodTwoWeeks" class="btn btn-outline-warning fw-bold" onclick="setPharmacyPeriod('twoWeeks')">أسبوعين</button>
                         <button type="button" id="pharmPeriodMonthly" class="btn btn-outline-warning fw-bold active" onclick="setPharmacyPeriod('monthly')">شهر</button>
                         <button type="button" id="pharmPeriodMonthWeek" class="btn btn-outline-warning fw-bold" onclick="setPharmacyPeriod('monthWeek')">شهر + أسبوع</button>
+                        <button type="button" id="pharmPeriodMonthTwoWeeks" class="btn btn-outline-warning fw-bold" onclick="setPharmacyPeriod('monthTwoWeeks')">شهر + أسبوعين</button>
                     </div>
                     <div class="d-flex gap-1 flex-wrap">
                         <button class="btn btn-sm btn-outline-dark fw-bold" onclick="requestPharmacyAdminAccess()" title="إدارة المواد والقواعد">
@@ -2492,6 +2494,28 @@
 
     function applyDataFromResponse(res, isBackground) {
         if (!res || !res.success) return;
+
+        // نظام التحديث القسري التلقائي للايفون والأندرويد عند وجود تحديث جديد
+        if (res.appVersion) {
+            const currentLocalVer = localStorage.getItem('app_version');
+            if (!currentLocalVer || currentLocalVer !== res.appVersion) {
+                localStorage.setItem('app_version', res.appVersion);
+                localStorage.removeItem(DATA_CACHE_KEY);
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        for (let reg of regs) reg.unregister();
+                    });
+                }
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    });
+                }
+                window.location.href = window.location.origin + window.location.pathname + '?v=' + res.appVersion;
+                return;
+            }
+        }
+
         dataStore = res;
 
         // تم إلغاء فرض وضع السيرفر ليكون المظهر منفصلاً وخاصاً بكل جهاز على حدة
@@ -2539,6 +2563,7 @@
         }
         updateStaffNotesBadge();
         updateAdminUI();
+        applyDayPickerLockState();
         refreshInfoOverlayIfOpen();
         
         // فحص إشعارات الأجهزة واللقاحات فوراً عند تشغيل البرنامج (Offline Support)
@@ -2586,6 +2611,7 @@
         }
         renderGeneralNotes();
         updateAdminModeIndicator();
+        applyDayPickerLockState();
     }
 
     function updateAdminModeIndicator() {
@@ -5861,10 +5887,65 @@ function openVaccineModal() {
         names.sort((a,b) => a.localeCompare(b, 'ar')); 
         document.getElementById('azListArea').innerHTML = names.map((n,i) => `<div class="p-2 border-bottom fw-bold text-primary">${i+1}. ${n}</div>`).join(''); 
         
+        updateAzLockBtnUI();
+
         const el = document.getElementById('azModal');
         let mdl = bootstrap.Modal.getInstance(el);
         if (!mdl) mdl = new bootstrap.Modal(el);
         mdl.show();
+    }
+
+    function updateAzLockBtnUI() {
+        const btn = document.getElementById('azToggleDayLockBtn');
+        if (!btn) return;
+        const isUnlocked = dataStore && dataStore.allowUserDayChange;
+        if (isUnlocked) {
+            btn.className = "btn btn-sm btn-outline-success py-0 px-2 fw-bold admin-only";
+            btn.innerHTML = '<i class="fas fa-lock-open me-1"></i> الأيام مفتوحة';
+            btn.title = "اضغط لقفل اختيار الأيام على المستخدمين";
+        } else {
+            btn.className = "btn btn-sm btn-outline-danger py-0 px-2 fw-bold admin-only";
+            btn.innerHTML = '<i class="fas fa-lock me-1"></i> الأيام مقفولة';
+            btn.title = "اضغط للسماح للمستخدمين بتغيير الأيام";
+        }
+        btn.style.setProperty('display', isAdminAuthenticated ? 'inline-block' : 'none', 'important');
+    }
+
+    function applyDayPickerLockState() {
+        const picker = document.getElementById('dayPicker');
+        if (!picker || !dataStore) return;
+
+        const isUnlockedForUsers = !!dataStore.allowUserDayChange;
+
+        if (isAdminAuthenticated || isUnlockedForUsers) {
+            picker.disabled = false;
+        } else {
+            picker.disabled = true;
+            if (dataStore.today && picker.value !== dataStore.today.toString()) {
+                picker.value = dataStore.today;
+                onDayPickerChange();
+            }
+        }
+        updateAzLockBtnUI();
+    }
+
+    function toggleDayPickerLock() {
+        if (!isAdminAuthenticated) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
+        const pwd = scheduleEditorPassword;
+        if (!pwd) return alert("الرجاء تسجيل الدخول كمسؤول أولاً");
+
+        const currentState = !!(dataStore && dataStore.allowUserDayChange);
+        const newState = !currentState;
+
+        google.script.run.withSuccessHandler(res => {
+            if (res && res.success) {
+                if (dataStore) dataStore.allowUserDayChange = newState;
+                applyDayPickerLockState();
+                alert(newState ? "🔓 تم فتح تغيير الأيام لجميع المستخدمين" : "🔒 تم قفل تغيير الأيام (المستخدمون يرون اليوم الحالي فقط)");
+            } else {
+                alert("❌ فشل تغيير الحالة: " + (res ? res.error : ""));
+            }
+        }).setAllowUserDayChangeServer(pwd, newState);
     }
     function takeScreenshot() { const target = document.getElementById('captureTarget'); const notes = document.getElementById('notesArea'); const originalNotesDisplay = notes.style.display; notes.style.display = 'none'; html2canvas(target, { scale: 2 }).then(canvas => { const link = document.createElement('a'); link.download = `جدول_${new Date().toLocaleDateString()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); notes.style.display = originalNotesDisplay; }); }
 
@@ -6134,19 +6215,6 @@ function openVaccineModal() {
     // تحديث لون الملاحظة في المسودة وإعادة رسم القائمة لتطبيق اللون فورياً
     function updateGenNoteDraftColor(idx, val) {
         genNotesDraft[idx].color = val;
-        renderGenNotesEditList();
-    }
-
-    // إضافة ملاحظة جديدة في أول حقل فارغ متاح
-    function addGenNoteFromInput() {
-        const inp = document.getElementById('newGenNoteInput');
-        const text = inp.value.trim();
-        if (!text) return alert("الرجاء كتابة نص الملاحظة أولاً");
-        if (genNotesDraft.length >= 15) {
-            return alert("الحد الأقصى 15 ملاحظة! احذف ملاحظة لتوفير مكان.");
-        }
-        genNotesDraft.push(text);
-        inp.value = '';
         renderGenNotesEditList();
     }
 
@@ -7430,7 +7498,7 @@ function submitPharmItemForm(e) {
 
 function setPharmacyPeriod(period) {
   currentPharmPeriod = period;
-  ['Weekly', 'Monthly', 'MonthWeek'].forEach(p => {
+  ['Weekly', 'TwoWeeks', 'Monthly', 'MonthWeek', 'MonthTwoWeeks'].forEach(p => {
     let btn = document.getElementById('pharmPeriod' + p);
     if (btn) btn.classList.toggle('active', p.toLowerCase() === period.toLowerCase());
   });
@@ -7521,8 +7589,10 @@ function renderPharmacyTable() {
   const stats = calculateSessionsStatsDynamic();
   let mult = 1;
   let periodLabel = "أسبوع";
-  if (currentPharmPeriod === 'monthly') { mult = 4; periodLabel = "شهر"; }
+  if (currentPharmPeriod === 'twoWeeks') { mult = 2; periodLabel = "أسبوعين"; }
+  else if (currentPharmPeriod === 'monthly') { mult = 4; periodLabel = "شهر"; }
   else if (currentPharmPeriod === 'monthWeek') { mult = 5; periodLabel = "شهر + أسبوع"; }
+  else if (currentPharmPeriod === 'monthTwoWeeks') { mult = 6; periodLabel = "شهر + أسبوعين"; }
   
   let html = `<table class="table table-sm table-bordered align-middle text-center mb-0" style="font-size:0.75rem;">
     <thead class="table-dark">
