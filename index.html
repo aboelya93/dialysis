@@ -1077,6 +1077,8 @@
             <a href="https://www.instagram.com/3mar.b.93" target="_blank">
                 By Omar Abo Elya <i class="fab fa-instagram"></i>
             </a>
+            <!-- إضافة رقم الإصدار بخط ناعم جداً أسفل الرابط -->
+            <div id="appVersionDisplay" style="font-size: 0.55rem; opacity: 0.5; margin-top: 5px; letter-spacing: 0.5px;">v0.0.0</div>
         </div>
     </div>
 </div>
@@ -2495,6 +2497,12 @@
     function applyDataFromResponse(res, isBackground) {
         if (!res || !res.success) return;
 
+        // تحديث رقم الإصدار في أسفل الشاشة
+        if (res.appVersion) {
+            const verEl = document.getElementById('appVersionDisplay');
+            if (verEl) verEl.textContent = 'v' + res.appVersion;
+        }
+
         // نظام التحديث القسري التلقائي للايفون والأندرويد عند وجود تحديث جديد
         if (res.appVersion) {
             const currentLocalVer = localStorage.getItem('app_version');
@@ -3416,12 +3424,18 @@ function updateFormHbvNextDate() {
     }
 
     function getPatientColorEmoji(p) {
-        if (p.isP) return " 🔴";
         const hex = (p.colorHex || "").toLowerCase();
-        if (hex === "#00ff00" || hex === "green" || hex === "#d4edda" || hex === "#28a745") return " 🟢";
-        if (hex === "#ffff00" || hex === "yellow" || hex === "#fff3cd" || hex === "#ffc107") return " 🟡";
-        if (hex === "#ff0000" || hex === "red" || hex === "#f8d7da" || hex === "#dc3545") return " 🔴";
-        return "";
+        let emoji = "";
+        if (hex === "#00ff00") emoji = " 🟢";
+        else if (hex === "#ffff00") emoji = " 🟡";
+        else if (hex === "#0078ff") emoji = " 🔵";
+        else if (hex === "#ff0000") emoji = " 🔴";
+        else if (hex === "#800080") emoji = " 🟣";
+        else if (hex === "#000000") emoji = " ⚫";
+        
+        // تم إلغاء العلامة الحمراء التلقائية والاعتماد فقط على اللون المختار يدوياً
+        const pTag = ""; 
+        return emoji + pTag;
     }
 
     // =============================================================
