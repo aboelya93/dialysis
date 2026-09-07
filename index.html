@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
         :root {
             --bg-body: #f0f3f8;
@@ -158,7 +159,8 @@
         .contact-section { display: flex; flex-direction: row; gap: 6px; align-items: center; flex-shrink: 0; direction: ltr; }
         .phone-row { display: flex; align-items: center; }
         .phone-num { display: none; }
-        .btn-call { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-size: 0.72rem; transition: transform 0.15s; flex-shrink: 0; }
+        .btn-call { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-size: 0.72rem; transition: transform 0.15s; flex-shrink: 0; position: relative; }
+        .call-num-badge { position: absolute; top: -3px; right: -3px; background: #fff; color: #333; font-size: 0.55rem; width: 13px; height: 13px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid #ddd; }
         .btn-call:active { transform: scale(0.9); }
         .bg-tel1 { background: #2e7d32; }
         .bg-tel2 { background: #1565c0; }
@@ -1087,7 +1089,11 @@
     <div class="search-nav-header">
         <button class="btn btn-danger btn-sm fw-bold shadow-sm" onclick="closeInfoOverlay()"><i class="fas fa-times"></i> إغلاق</button>
         <h6 class="m-0 fw-bold text-center flex-grow-1">تفاصيل المريض</h6>
-        <div style="width: 68px;"></div> 
+        <div style="width: 68px;">
+            <button class="btn btn-outline-success btn-sm fw-bold admin-only" onclick="exportPatientsToExcel()" title="تصدير الكل لملف Excel" style="display: none;">
+                <i class="fas fa-file-excel"></i>
+            </button>
+        </div> 
     </div>
     <div id="pSearchArea">
         <button class="btn btn-success btn-sm w-100 fw-bold mb-3 admin-only" onclick="openAddPatientForm()" style="display: none;">
@@ -1180,6 +1186,16 @@
                 </div>
                 <div class="row g-2 mb-2">
                     <div class="col-6">
+                        <label class="small fw-bold text-muted mb-1">تاريخ الميلاد:</label>
+                        <input type="date" id="formPatientBirthDate" class="form-control form-control-sm fw-bold">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold text-muted mb-1">رقم الهوية:</label>
+                        <input type="text" id="formPatientIdNumber" class="form-control form-control-sm fw-bold" autocomplete="off">
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
                         <label class="small fw-bold text-muted mb-1">تاريخ الدخول:</label>
                         <input type="date" id="formPatientEntryDate" class="form-control form-control-sm fw-bold">
                     </div>
@@ -1223,6 +1239,9 @@
             <div class="modal-header bg-danger text-white py-2 d-flex justify-content-between align-items-center">
                 <h6 class="modal-title fw-bold mb-0"><i class="fas fa-syringe ms-1"></i> الموقف اللقاحي للمرضى</h6>
                 <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-light text-primary fw-bold py-0 px-2 admin-only ms-1" onclick="generateMonthlyVaccineImageReport()" style="display:none; font-size:0.75rem;" title="تصدير تقرير المستحقين كصورة">
+                        <i class="fas fa-image me-1"></i> تقرير شهري
+                    </button>
                     <button type="button" class="btn btn-sm btn-light text-danger fw-bold py-0 px-2 admin-only" onclick="exportVaccineReportImage()" style="display:none; font-size:0.75rem;" title="تصدير تقرير A4">
                         <i class="fas fa-file-image me-1"></i> تصدير
                     </button>
@@ -1984,6 +2003,32 @@
         </div>
     </div>
 </div>
+
+<!-- بداية كود التقرير الشهري الجديد الذي سيتم تصويره -->
+<div id="vaccineMonthlyReportWrap" style="position:fixed; left:-9999px; top:-9999px; pointer-events:none;">
+    <div id="vaccineMonthlyReportCard" style="width:1000px; min-height:1000px; background:#ffffff; color:#1e293b; font-family:'Tajawal', sans-serif; padding:40px; box-sizing:border-box; display:flex; flex-direction:column; border: 4px solid #1e3a5f;">
+        <div style="background:linear-gradient(135deg, #1e3a5f 0%, #2b6cb0 100%); color:#ffffff; padding:20px; border-radius:16px; text-align:center; margin-bottom:25px; box-shadow:0 6px 15px rgba(0,0,0,0.15);">
+            <div id="vReportTitle" style="font-size:1.6rem; font-weight:800;">تقرير لقاح الكبد الفايروسي</div>
+            <div id="vReportSubTitle" style="font-size:1.1rem; font-weight:700; opacity:0.9; margin-top:5px;">وحدة غسيل الكلى</div>
+        </div>
+        <table style="width:100%; border-collapse:collapse; text-align:center; table-layout:fixed; border: 2px solid #cbd5e1;">
+            <thead>
+                <tr style="background:#f1f5f9; color:#1e3a5f; border-bottom:3px solid #1e3a5f; font-size:1rem; font-weight:800;">
+                    <th style="width:6%; padding:12px; border:1px solid #cbd5e1;">ت</th>
+                    <th style="width:25%; padding:12px; border:1px solid #cbd5e1;">اسم المريض</th>
+                    <th style="width:18%; padding:12px; border:1px solid #cbd5e1;">الموقف اللقاحي</th>
+                    <th style="width:18%; padding:12px; border:1px solid #cbd5e1;">موعد الجرعة</th>
+                    <th style="width:33%; padding:12px; border:1px solid #cbd5e1;">جدول الغسلات</th>
+                </tr>
+            </thead>
+            <tbody id="vReportTableBody" style="font-size:0.95rem; font-weight:700;"></tbody>
+        </table>
+        <div style="margin-top:auto; padding-top:20px; text-align:center; font-size:0.85rem; color:#64748b; font-weight:800; border-top:1px dashed #cbd5e1;">
+            تاريخ التقرير: <span id="vReportGenDate"></span>
+        </div>
+    </div>
+</div>
+<!-- نهاية كود التقرير الشهري الجديد -->
 
 <!-- كرت تصدير صورة الصيدلية A4 العمودية (مخفي للرسم) -->
 <div id="pharmExportCardWrap" style="position:fixed; left:-9999px; top:-9999px; pointer-events:none;">
@@ -3256,8 +3301,8 @@ function updateFormHbvNextDate() {
                             </div>
                         </div>
                         <div class="contact-section">
-                            ${p.c.phone1 ? `<div class="phone-row" onclick="event.stopPropagation()"><button type="button" onclick="handlePhoneClick('${p.c.phone1}', event, '${escapeHtml(p.n)}')" class="btn-call bg-tel1" style="border: none;" title="اتصال 1"><i class="fas fa-phone"></i></button></div>` : ''}
-                            ${p.c.phone2 ? `<div class="phone-row" onclick="event.stopPropagation()"><button type="button" onclick="handlePhoneClick('${p.c.phone2}', event, '${escapeHtml(p.n)}')" class="btn-call bg-tel2" style="border: none;" title="اتصال 2"><i class="fas fa-phone"></i></button></div>` : ''}
+                            ${p.c.phone1 ? `<div class="phone-row" onclick="event.stopPropagation()"><button type="button" onclick="handlePhoneClick('${p.c.phone1}', event, '${escapeHtml(p.n)}')" class="btn-call bg-tel1" style="border: none;" title="اتصال 1"><i class="fas fa-phone"></i><span class="call-num-badge">1</span></button></div>` : ''}
+                            ${p.c.phone2 ? `<div class="phone-row" onclick="event.stopPropagation()"><button type="button" onclick="handlePhoneClick('${p.c.phone2}', event, '${escapeHtml(p.n)}')" class="btn-call bg-tel2" style="border: none;" title="اتصال 2"><i class="fas fa-phone"></i><span class="call-num-badge">2</span></button></div>` : ''}
                         </div>
                     </div>
                 </div>`;
@@ -5472,20 +5517,21 @@ function updateFormHbvNextDate() {
         }
         
         h += `<div class="detail-grid">`;
-        const order = ["رقم الطبلة", "الجنس", "العمر", "المهنة", "عنوان السكن", "الطبيب", "الوزن", "الفلتر"];
+        const order = ["رقم الطبلة", "الجنس", "العمر", "المهنة", "عنوان السكن", "الطبيب", "الوزن", "الفلتر", "تاريخ الميلاد", "رقم الهوية"];
         order.forEach(key => { 
             let val = p[key] !== undefined ? p[key] : "---"; 
             if(key === "العمر" && val !== "---" && val !== null && val !== "") { val = toArabicDigits(val) + " سنة"; } 
             else if(key === "الوزن" && val !== "---" && val !== null && val !== "") { val = toArabicDigits(val) + " كغم"; } 
             else if(key === "رقم الطبلة" && val !== "---" && val !== null && val !== "") { val = toArabicDigits(val); }
+            // إضافة التنسيق العربي لتاريخ الميلاد ورقم الهوية
+            else if(key === "تاريخ الميلاد" && val !== "---" && val !== null && val !== "") { val = formatDateToArabicDDMMYYYY(val); }
+            else if(key === "رقم الهوية" && val !== "---" && val !== null && val !== "") { val = toArabicDigits(val); }
+            
             h += `<div class="detail-row"><span class="detail-label">${key}</span><span class="detail-value">${val}</span></div>`; 
         });
         h += `</div>`;
         
-        if(contact.phone1) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 1</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${cleanPhoneString(contact.phone1)}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone1}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel1 mx-3" style="border: none;"><i class="fas fa-phone"></i></button></div>`;
-        if(contact.phone2) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 2</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${cleanPhoneString(contact.phone2)}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone2}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel2 mx-3" style="border: none;"><i class="fas fa-phone"></i></button></div>`;
-
-        // سطر تاريخ الدخول وعدد الغسلات الأسبوعي
+        // تم تقديم سطر تاريخ الدخول والغسلات فوق أرقام الموبايل
         const entryDateVal = p["تاريخ الدخول"] ? formatDateToArabicDDMMYYYY(p["تاريخ الدخول"]) : "---";
         const sessionsVal = p["عدد الغسلات الأسبوعي"] ? toArabicDigits(p["عدد الغسلات الأسبوعي"]) : "---";
         h += `<div class="detail-grid mb-2">
@@ -5493,7 +5539,9 @@ function updateFormHbvNextDate() {
             <div class="detail-row"><span class="detail-label">الغسلات الأسبوعية</span><span class="detail-value">${sessionsVal}</span></div>
         </div>`;
 
-        // كرت موقف لقاح التهاب الكبد الفيروسي المنسق
+        if(contact.phone1) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 1</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${cleanPhoneString(contact.phone1)}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone1}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel1 mx-3" style="border: none;"><i class="fas fa-phone"></i><span class="call-num-badge">1</span></button></div>`;
+        if(contact.phone2) h += `<div class="detail-row mb-2" style="flex-direction:row; justify-content:space-between; align-items:center; background: var(--bg-card); border-radius:8px; border:1px solid var(--border);"><div class="d-flex flex-column px-3 py-2 text-start"><span class="detail-label bg-transparent p-0 text-muted" style="font-size:0.65rem; border:0;">رقم الموبايل 2</span><span class="detail-value p-0 phone-detail-value" style="justify-content:flex-start; min-height:auto;">${cleanPhoneString(contact.phone2)}</span></div><button type="button" onclick="handlePhoneClick('${contact.phone2}', event, '${escapeHtml(fullName)}')" class="btn-call bg-tel2 mx-3" style="border: none;"><i class="fas fa-phone"></i><span class="call-num-badge">2</span></button></div>`;
+
         const hbvCalc = calculateHbvStatusAndNextDate(p["HBV1"], p["HBV2"], p["HBV3"]);
         const nextDoseDisp = hbvCalc.nextDateStr !== "---" ? formatDateToArabicDDMMYYYY(hbvCalc.nextDateStr) : "---";
         h += `<div class="border rounded p-2 mb-2" style="background: var(--bg-card);">
@@ -5642,7 +5690,9 @@ function updateFormHbvNextDate() {
 
         if (vInfo.nextDateStr && vInfo.nextDateStr !== "---") {
             const nextDoseDate = new Date(vInfo.nextDateStr.replace(/\//g, '-'));
-            diffDays = Math.ceil((nextDoseDate - now) / (1000 * 60 * 60 * 24));
+            const d1 = new Date(nextDoseDate).setHours(0,0,0,0);
+            const d2 = new Date(now).setHours(0,0,0,0);
+            diffDays = Math.round((d1 - d2) / (1000 * 60 * 60 * 24));
             hasUpcoming = true;
             if (diffDays <= 10) isDueSoon = true;
         }
@@ -5799,7 +5849,7 @@ function openVaccineModal() {
 
         if (vStatus.nextDateStr && vStatus.nextDateStr !== "---") {
             const nextDoseDate = new Date(vStatus.nextDateStr.replace(/\//g, '-'));
-            diffDays = Math.ceil((nextDoseDate - now) / (1000 * 60 * 60 * 24));
+            diffDays = Math.round((nextDoseDate.setHours(0,0,0,0) - now.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
             
             hasUpcoming = true; // المريض ينتظر جرعة قادمة
             if (diffDays <= 10) isDueSoon = true; // مستحق حالياً (تنبيه)
@@ -6375,6 +6425,8 @@ function openVaccineModal() {
         document.getElementById('formPatientFistula').value = ((p["Fistula"] || p["fistula"] || "") === 'Fistula') ? 'Fistula' : '';
         document.getElementById('formPatientPhone1').value = cleanPhoneString(contact.phone1 || p["رقم الموبايل 1"] || "");
         document.getElementById('formPatientPhone2').value = cleanPhoneString(contact.phone2 || p["رقم الموبايل 2"] || "");
+        document.getElementById('formPatientBirthDate').value = p["تاريخ الميلاد"] || "";
+        document.getElementById('formPatientIdNumber').value = p["رقم الهوية"] || "";
         document.getElementById('formPatientEntryDate').value = p["تاريخ الدخول"] || "";
         document.getElementById('formPatientWeeklySessions').value = p["عدد الغسلات الأسبوعي"] || "";
         document.getElementById('formPatientHbv1').value = p["HBV1"] || "";
@@ -6457,6 +6509,8 @@ function openVaccineModal() {
             fistula: document.getElementById('formPatientFistula').value === 'Fistula' ? 'Fistula' : '',
             phone1: rawPhone1,
             phone2: rawPhone2,
+            birthDate: document.getElementById('formPatientBirthDate').value,
+            idNumber: document.getElementById('formPatientIdNumber').value.trim(),
             entryDate: document.getElementById('formPatientEntryDate').value.trim(),
             weeklySessions: document.getElementById('formPatientWeeklySessions').value.trim(),
             hbv1: document.getElementById('formPatientHbv1').value.trim(),
@@ -6494,6 +6548,8 @@ function openVaccineModal() {
                         "رقم الموبايل 1": pData.phone1,
                         "رقم الموبايل 2": pData.phone2,
                         "Fistula": pData.fistula,
+                        "تاريخ الميلاد": pData.birthDate,
+                        "رقم الهوية": pData.idNumber,
                         "تاريخ الدخول": pData.entryDate,
                         "عدد الغسلات الأسبوعي": pData.weeklySessions,
                         "HBV1": pData.hbv1,
@@ -7227,18 +7283,26 @@ function updateVaccineNotificationBadge() {
 
     let dueCount = 0;
     const now = new Date();
-    now.setHours(0,0,0,0);
+    // تصفير الوقت الحالي للمقارنة بالتواريخ فقط
+    const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
     dataStore.patientsDetailedInfo.forEach(p => {
-        // استخدام دالة الحساب الموجودة أصلاً في البرنامج لضمان الدقة
         const calc = calculateHbvStatusAndNextDate(p["HBV1"], p["HBV2"], p["HBV3"]);
         
         if (calc.nextDateStr && calc.nextDateStr !== "---") {
-            const nextDoseDate = new Date(calc.nextDateStr.replace(/\//g, '-'));
-            const diffTime = nextDoseDate - now;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            // تحويل تاريخ الجرعة القادمة إلى كائن تاريخ وتصفير وقته
+            const parts = calc.nextDateStr.split(/[\/\-]/);
+            let nextDoseDate;
+            if (parts[0].length === 4) { // yyyy-mm-dd
+                nextDoseDate = new Date(parts[0], parts[1]-1, parts[2]);
+            } else { // dd/mm/yyyy
+                nextDoseDate = new Date(parts[2], parts[1]-1, parts[0]);
+            }
             
-            // إذا بقي للموعد 10 أيام أو أقل (أو الموعد قد فات فعلياً)
+            const d1 = nextDoseDate.getTime();
+            // حساب الفرق الحقيقي بالأيام (16 - 7 = 9)
+            const diffDays = Math.round((d1 - d2) / (1000 * 60 * 60 * 24));
+            
             if (diffDays <= 10) {
                 dueCount++;
             }
@@ -7248,13 +7312,15 @@ function updateVaccineNotificationBadge() {
     const badge = document.getElementById('vaccineBadge');
     const icon = document.getElementById('vaccineIcon');
 
-    if (dueCount > 0) {
-        badge.innerText = toArabicDigits(dueCount);
-        badge.style.display = 'block';
-        icon.style.color = '#dc3545'; // يتحول للأحمر عند الاستحقاق
-    } else {
-        badge.style.display = 'none';
-        icon.style.color = '#0d6efd'; // يرجع للأزرق الافتراضي
+    if (badge && icon) {
+        if (dueCount > 0) {
+            badge.innerText = toArabicDigits(dueCount);
+            badge.style.display = 'flex';
+            icon.style.color = '#dc3545';
+        } else {
+            badge.style.display = 'none';
+            icon.style.color = '#0d6efd';
+        }
     }
 }
 
@@ -7811,6 +7877,219 @@ function generatePharmExportImage() {
     alert("تعذر تصدير الصورة: " + err.message);
   });
 }
+
+// دالة تحويل أي أرقام إلى إنجليزية (ASCII) لاستخدامها في ملف الاكسل حصراً
+function forceEnglishNumbers(str) {
+    if (str === null || str === undefined) return "";
+    return str.toString()
+        .replace(/[٠۰]/g, '0').replace(/[١۱]/g, '1')
+        .replace(/[٢۲]/g, '2').replace(/[٣۳]/g, '3')
+        .replace(/[٤۴]/g, '4').replace(/[٥۵]/g, '5')
+        .replace(/[٦۶]/g, '6').replace(/[٧۷]/g, '7')
+        .replace(/[٨۸]/g, '8').replace(/[٩۹]/g, '9');
+}
+
+function exportPatientsToExcel() {
+    if (!dataStore || !dataStore.patientsDetailedInfo) return alert("لا توجد بيانات للتصدير");
+    if (!confirm("سيتم تصدير معلومات المرضى الى ملف اكسل")) return;
+
+    const sortedData = [...dataStore.patientsDetailedInfo].sort((a, b) => 
+        (a["اسم المريض"] || "").localeCompare((b["اسم المريض"] || ""), 'ar')
+    );
+
+    const headers = [
+        "ت", "اسم المريض", "الجنس", "رقم الطبلة", "العمر", "المهنة", "عنوان السكن", 
+        "الوزن", "الفلتر", "الطبيب", "رقم الموبايل 1", "رقم الموبايل 2", "Fistula", 
+        "تاريخ الدخول", "تاريخ الميلاد", "رقم الهوية", "عدد الغسلات الأسبوعية", 
+        "الموقف اللقاحي", "تاريخ ج1", "تاريخ ج2", "تاريخ ج3", "موعد الجرعة القادمة"
+    ];
+
+    // تحديد الأعمدة التي ستبقى بمحاذاة اليمين (اسم المريض، السكن، الطبيب)
+    // الفهرس يبدأ من 0: [1] اسم المريض، [6] العنوان، [9] الطبيب
+    const rightAlignCols = [1, 6, 9];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+
+    // تعبئة البيانات وتطبيق التنسيق
+    sortedData.forEach((p, idx) => {
+        const vInfo = getVaccineStatusInfo(p);
+        const rowData = [
+            forceEnglishNumbers(idx + 1),
+            p["اسم المريض"] || "",
+            p["الجنس"] || "",
+            forceEnglishNumbers(getPatientTabletNumber(p)),
+            forceEnglishNumbers(p["العمر"]),
+            p["المهنة"] || "",
+            p["عنوان السكن"] || "",
+            forceEnglishNumbers(p["الوزن"]),
+            p["الفلتر"] || p["Filter"] || "",
+            p["الطبيب"] || "",
+            forceEnglishNumbers(cleanPhoneString(p["رقم الموبايل 1"])),
+            forceEnglishNumbers(cleanPhoneString(p["رقم الموبايل 2"])),
+            p["Fistula"] || "",
+            forceEnglishNumbers(p["تاريخ الدخول"]),
+            forceEnglishNumbers(p["تاريخ الميلاد"]),
+            forceEnglishNumbers(p["رقم الهوية"]),
+            forceEnglishNumbers(p["عدد الغسلات الأسبوعي"]),
+            vInfo.statusText || "",
+            forceEnglishNumbers(p["HBV1"]),
+            forceEnglishNumbers(p["HBV2"]),
+            forceEnglishNumbers(p["HBV3"]),
+            forceEnglishNumbers(vInfo.nextDateStr)
+        ];
+        XLSX.utils.sheet_add_aoa(ws, [rowData], { origin: -1 });
+    });
+
+    // --- تطبيق التنسيقات (الألوان والمحاذاة) ---
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cell_address = { c: C, r: R };
+            const cell_ref = XLSX.utils.encode_cell(cell_address);
+            if (!ws[cell_ref]) continue;
+
+            if (!ws[cell_ref].s) ws[cell_ref].s = {};
+
+            // تنسيق الهيدر (الصف الأول)
+            if (R === 0) {
+                ws[cell_ref].s = {
+                    fill: { fgColor: { rgb: "D9E1F2" } }, // لون خلفية أزرق فاتح هادئ
+                    font: { bold: true, color: { rgb: "000000" } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: { top: {style: "thin"}, bottom: {style: "thin"}, left: {style: "thin"}, right: {style: "thin"} }
+                };
+            } else {
+                // تنسيق بقية الصفوف
+                const isRight = rightAlignCols.includes(C);
+                ws[cell_ref].s.alignment = { 
+                    horizontal: isRight ? "right" : "center", 
+                    vertical: "center" 
+                };
+            }
+        }
+    }
+
+    // ضبط عرض الأعمدة تلقائياً
+    const colWidths = headers.map((h, i) => {
+        let maxLen = h.toString().length + 10;
+        sortedData.forEach(p => {
+            // فحص عشوائي لبعض الخلايا لضبط العرض
+            const cellVal = ws[XLSX.utils.encode_cell({c:i, r:1})]?.v || "";
+            if(cellVal.toString().length > maxLen) maxLen = cellVal.toString().length;
+        });
+        return { wch: Math.min(maxLen + 4, 40) }; 
+    });
+    ws['!cols'] = colWidths;
+
+    // تفعيل RTL
+    ws['!views'] = [{ RTL: true }];
+    wb.Workbook = { Views: [{ RTL: true }] };
+    XLSX.utils.book_append_sheet(wb, ws, "بيانات المرضى");
+
+    const dateStr = forceEnglishNumbers(new Date().toLocaleDateString('ar-IQ').replace(/\//g, '-'));
+    XLSX.writeFile(wb, `Dialysis_Patients_${dateStr}.xlsx`);
+}
+
+function generateMonthlyVaccineImageReport() {
+    if (!dataStore || !dataStore.patientsDetailedInfo) return alert("لا توجد بيانات");
+    if (!confirm("سيتم توليد صورة لتقرير المستحقين لهذا الشهر وغير الملقحين")) return;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let duePatients = [];
+    let nonVaccinated = [];
+
+    dataStore.patientsDetailedInfo.forEach(p => {
+        const vInfo = getVaccineStatusInfo(p);
+        if (vInfo.nextDateStr && vInfo.nextDateStr !== "---") {
+            const nextDate = new Date(vInfo.nextDateStr.replace(/\//g, '-'));
+            if (nextDate.getFullYear() < currentYear || (nextDate.getFullYear() === currentYear && nextDate.getMonth() <= currentMonth)) {
+                duePatients.push({ p, vInfo, dateObj: nextDate });
+            }
+        } else if (vInfo.statusKey === "none") {
+            nonVaccinated.push({ p, vInfo });
+        }
+    });
+
+    duePatients.sort((a, b) => a.dateObj - b.dateObj);
+    nonVaccinated.sort((a, b) => (a.p["اسم المريض"] || "").localeCompare((b.p["اسم المريض"] || ""), 'ar'));
+
+    const finalReportList = [...duePatients, ...nonVaccinated];
+    const totalCount = finalReportList.length;
+    if (totalCount === 0) return alert("لا يوجد مستحقين حالياً");
+
+    // --- منطق الضبط الذكي للأحجام بناءً على العدد ---
+    let fontSize = "0.95rem";
+    let paddingSize = "12px";
+    let scheduleFont = "0.85rem";
+    let rowGap = "5px";
+
+    if (totalCount > 30) {
+        fontSize = "0.75rem";
+        paddingSize = "6px";
+        scheduleFont = "0.7rem";
+        rowGap = "2px";
+    } else if (totalCount > 15) {
+        fontSize = "0.85rem";
+        paddingSize = "8px";
+        scheduleFont = "0.75rem";
+        rowGap = "3px";
+    }
+
+    const tbody = document.getElementById('vReportTableBody');
+    let rowsHtml = '';
+
+    finalReportList.forEach((item, idx) => {
+        const pName = item.p["اسم المريض"];
+        const status = item.vInfo.statusText;
+        const nextDose = (item.vInfo.nextDateStr && item.vInfo.nextDateStr !== "---") ? toArabicDigits(formatDateToArabicDDMMYYYY(item.vInfo.nextDateStr)) : "---";
+        
+        const sch = getPatientSchedule(pName);
+        const schHtml = sch.length > 0 
+            ? sch.map((s, sIdx) => `<div style="padding: ${rowGap} 0; border-bottom: ${sIdx === sch.length-1 ? 'none' : '1px dashed #e2e8f0'}; text-align: center;">${s.day} (${s.shift})</div>`).join("")
+            : `<div style="text-align:center; color:#94a3b8;">لا يوجد</div>`;
+
+        const bg = (idx % 2 === 0) ? "#ffffff" : "#f8fafc";
+        const statusColor = (status === "غير ملقح") ? "#dc3545" : "#1e3a5f";
+
+        rowsHtml += `
+            <tr style="background:${bg}; border-bottom:1px solid #cbd5e1; font-size:${fontSize};">
+                <td style="padding:${paddingSize}; border:1px solid #cbd5e1; font-weight:800; text-align:center;">${toArabicDigits(idx + 1)}</td>
+                <td style="padding:${paddingSize}; border:1px solid #cbd5e1; text-align:right; font-weight:800; color:#1e293b;">${pName}</td>
+                <td style="padding:${paddingSize}; border:1px solid #cbd5e1; text-align:center; color:${statusColor};">${status}</td>
+                <td style="padding:${paddingSize}; border:1px solid #cbd5e1; text-align:center; color:#c62828; font-weight:800;">${nextDose}</td>
+                <td style="padding:0; border:1px solid #cbd5e1; vertical-align:top; font-size:${scheduleFont}; font-weight:700;">${schHtml}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = rowsHtml;
+    document.getElementById('vReportGenDate').textContent = toArabicDigits(new Date().toLocaleDateString('ar-IQ'));
+    document.getElementById('vReportTitle').textContent = `تقرير لقاح الكبد الفايروسي لشهر (${toArabicDigits(currentMonth + 1)})`;
+
+    const card = document.getElementById('vaccineMonthlyReportCard');
+    
+    // ضبط العرض والارتفاع لمنع التمدد المبالغ فيه
+    card.style.height = "auto"; 
+    card.style.width = "1000px";
+
+    html2canvas(card, {
+        scale: 2.5, // تقليل الـ scale قليلاً للأعداد الكبيرة لضمان سرعة المعالجة وعدم تجاوز ذاكرة المتصفح
+        useCORS: true,
+        backgroundColor: '#ffffff'
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Report_HBV_${currentMonth + 1}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        alert("خطأ: " + err.message);
+    });
+}
+
 </script>
 </body>
 </html>
