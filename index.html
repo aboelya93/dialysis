@@ -6,9 +6,10 @@
     <meta name="theme-color" content="#1565c0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="جدول الغسيل">
+    <meta name="apple-mobile-web-app-title" content="جدول المرضى">
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="manifest" id="pwaManifestLink">
+    <link rel="manifest" id="pwaManifestLink" href="./manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%231565c0'/%3E%3Crect x='46' y='81' width='100' height='30' rx='6' fill='%23ffffff'/%3E%3Crect x='81' y='46' width='30' height='100' rx='6' fill='%23ffffff'/%3E%3Cpath d='M 50,96 H 80 L 87,70 L 97,122 L 105,86 L 112,104 L 117,96 H 142' stroke='%231565c0' stroke-width='6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
     <title>جدول مرضى غسيل الكلى</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
@@ -2062,18 +2063,26 @@
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNH_h1w3yjF_-IclXlZUCa0e8GyzsuO7AAKTMWQn6i2qeCEFrvZNe8fFAGFWaCIk-NIg/exec";
 
     function executeServerMethod(methodName, args, successCb, failureCb) {
+        // إضافة مؤقت زمني ذكي: إلغاء التعليق بعد 12 ثانية والتحول للأوفلاين فوراً
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
         fetch(GAS_WEB_APP_URL, {
             method: "POST",
             mode: "cors",
             headers: {
-                "Content-Type": "text/plain;charset=utf-8" // تجنب قيود الحماية لمرور الطلبات بسرعة فائقة
+                "Content-Type": "text/plain;charset=utf-8"
             },
             body: JSON.stringify({
                 functionName: methodName,
                 arguments: args
-            })
+            }),
+            signal: controller.signal
         })
-        .then(response => response.json())
+        .then(response => {
+            clearTimeout(timeoutId);
+            return response.json();
+        })
         .then(data => {
             if (data.status === "success") {
                 if (successCb) successCb(data.result);
@@ -2083,8 +2092,9 @@
             }
         })
         .catch(err => {
+            clearTimeout(timeoutId);
             if (failureCb) failureCb(err);
-            else console.warn("تعذر الاتصال بالخادم (وضع الأوفلاين): " + err.message);
+            else console.warn("تعذر الاتصال بالخادم (العمل بالوضع المحلي المحفوظ): " + err.message);
         });
     }
 
@@ -2465,27 +2475,38 @@
         
         const loadingPill = document.getElementById('dataLoadingPill');
         if (loadingPill) {
-            // تصميم أيقونة دائرية ناعمة لا تحجب النظر عن جدول اليوم إطلاقاً
-            loadingPill.style.padding = '8px 12px';
+            loadingPill.style.padding = '8px 14px';
             loadingPill.style.borderRadius = '30px';
-            loadingPill.style.opacity = active ? '0.85' : '0';
-            loadingPill.style.transition = 'opacity 0.3s ease';
+            loadingPill.style.opacity = '1';
+            loadingPill.style.transition = 'background 0.3s ease, opacity 0.3s ease';
             
-            const textSpan = loadingPill.querySelector('span:not(.data-loading-pill-shine)');
             const icon = loadingPill.querySelector('i');
 
-            if (!navigator.onLine) {
-                loadingPill.style.background = 'rgba(69, 90, 100, 0.85)';
-                if (textSpan) textSpan.style.display = 'none';
+            if (!navigator.onLine || active === 'offline') {
+                // وضع العمل دون اتصال (أوفلاين): أيقونة عدم الاتصال ولون تحذيري واضح
+                loadingPill.style.background = 'linear-gradient(135deg, #b71c1c 0%, #e53935 100%)';
                 if (icon) icon.className = 'fas fa-wifi-slash';
-            } else {
-                loadingPill.style.background = 'rgba(21, 101, 192, 0.85)'; // أزرق طبي ناعم ومريح للعين
-                if (textSpan) textSpan.style.display = 'none'; // إخفاء النص الطويل بالكامل
-                if (icon) icon.className = 'fas fa-sync-alt fa-spin'; // دوران هادئ للأيقونة فقط
+            } else if (active === true) {
+                // جاري الاتصال ومزامنة البيانات في الخلفية
+                loadingPill.style.background = 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)';
+                if (icon) icon.className = 'fas fa-sync-alt fa-spin';
             }
         }
         if (!active) resetRefreshDataNowBtn();
     }
+
+    // إضافة مستشعرات مراقبة الاتصال الفوري بالإنترنت (Online / Offline Events)
+    window.addEventListener('online', () => {
+        if (navigator.onLine) {
+            // عند عودة الإنترنت، محاولة التحديث تلقائياً فوراً
+            refreshDataNow();
+        }
+    });
+
+    window.addEventListener('offline', () => {
+        // عند انقطاع الإنترنت، تحويل الأيقونة للون الأحمر وتثبيتها فوراً لتنبيه الكادر
+        setStaleDataUI('offline');
+    });
 
     function resetRefreshDataNowBtn() {
         const pill = document.getElementById('dataLoadingPill');
@@ -2548,10 +2569,11 @@
             if (verEl) verEl.textContent = 'v' + res.appVersion;
         }
 
-        // نظام التحديث القسري التلقائي للايفون والأندرويد عند وجود تحديث جديد
+        // نظام التحديث الذكي: إعادة التحميل فقط عند وجود ترقية فعلية وتفادي الوميض في أول تشغيل
         if (res.appVersion) {
             const currentLocalVer = localStorage.getItem('app_version');
-            if (!currentLocalVer || currentLocalVer !== res.appVersion) {
+            if (currentLocalVer && currentLocalVer !== res.appVersion) {
+                // يوجد إصدار جديد بالفعل -> مسح الكاش والتحديث فوراً
                 localStorage.setItem('app_version', res.appVersion);
                 localStorage.removeItem(DATA_CACHE_KEY);
                 if ('serviceWorker' in navigator) {
@@ -2566,6 +2588,9 @@
                 }
                 window.location.href = window.location.origin + window.location.pathname + '?v=' + res.appVersion;
                 return;
+            } else if (!currentLocalVer) {
+                // أول تشغيل للتطبيق -> حفظ الإصدار فقط دون إعادة تحميل أو وميض
+                localStorage.setItem('app_version', res.appVersion);
             }
         }
 
@@ -2982,17 +3007,19 @@ function openAdminStatsModal() {
         google.script.run.withSuccessHandler(res => {
             isFetchingFreshData = false;
             if (!res || !res.success) {
-                setStaleDataUI(false);
+                // في حال تعذر جلب التحديث، إبقاء حالة الأوفلاين للعمل على البيانات المحفوظة
+                setStaleDataUI('offline');
                 hideInitialLoader();
                 return;
             }
             saveDataCache(res);
             applyDataFromResponse(res, isBackground);
-            setStaleDataUI(false);
+            setStaleDataUI(false); // تم جلب أحدث البيانات بنجاح
             hideInitialLoader();
         }).withFailureHandler(function() {
             isFetchingFreshData = false;
-            setStaleDataUI(false);
+            // التحول الصامت الفوري للأوفلاين مع إبقاء الواجهة تعمل بسلاسة من الكاش
+            setStaleDataUI('offline');
             hideInitialLoader();
         }).getUnifiedData();
     }
@@ -5760,7 +5787,7 @@ function updateFormHbvNextDate() {
         backgroundColor: '#ffffff'
     }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `تقرير_الموقف_اللقاحي_${new Date().toLocaleDateString()}.png`;
+        link.download = `تقرير_الموقف_اللقاحي_${getSafeDateForFilename()}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     }).catch(err => {
@@ -5999,7 +6026,27 @@ function openVaccineModal() {
             }
         }).setAllowUserDayChangeServer(pwd, newState);
     }
-    function takeScreenshot() { const target = document.getElementById('captureTarget'); const notes = document.getElementById('notesArea'); const originalNotesDisplay = notes.style.display; notes.style.display = 'none'; html2canvas(target, { scale: 2 }).then(canvas => { const link = document.createElement('a'); link.download = `جدول_${new Date().toLocaleDateString()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); notes.style.display = originalNotesDisplay; }); }
+    function getSafeDateForFilename() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function takeScreenshot() {
+        const target = document.getElementById('captureTarget');
+        const notes = document.getElementById('notesArea');
+        const originalNotesDisplay = notes ? notes.style.display : 'none';
+        if (notes) notes.style.display = 'none';
+        html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `جدول_${getSafeDateForFilename()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            if (notes) notes.style.display = originalNotesDisplay;
+        });
+    }
 
     // دالة التقاط صورة الجدول الأسبوعي كاملاً وتصديرها بقياسات ورقة A4 Landscape دائماً وبدقة وضوح فائقة (HD)
     function takeScheduleScreenshot() {
@@ -6124,9 +6171,9 @@ function openVaccineModal() {
             
             ctx.drawImage(capturedCanvas, x, y, finalW, finalH);
             
-            // تصدير الصورة وتحميلها
+            // تصدير الصورة وتحميلها باسم متوافق مع نظام الموبايل
             const link = document.createElement('a');
-            link.download = `جدول_الاسبوع_${modeText}_A4_HD_${new Date().toLocaleDateString()}.png`;
+            link.download = `جدول_الاسبوع_${modeText}_A4_HD_${getSafeDateForFilename()}.png`;
             link.href = a4Canvas.toDataURL('image/png');
             link.click();
         }).catch(err => {
@@ -7876,7 +7923,7 @@ function generatePharmExportImage() {
   }).then(canvas => {
     const link = document.createElement('a');
     let fileName = customTitle ? `تقرير_احتياج_${customTitle}` : `تقرير_احتياج_الصيدلية`;
-    link.download = `${fileName}_${new Date().toLocaleDateString()}.png`;
+    link.download = `${fileName}_${getSafeDateForFilename()}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
     
